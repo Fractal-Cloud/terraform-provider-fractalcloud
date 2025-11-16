@@ -1,0 +1,10 @@
+---
+schema: 1.1
+
+partition: tf-ecosystem
+
+summary:
+  owner: fractal-cloud
+  description: |
+    Fractal Cloud Terraform Provider
+  visibility: public
