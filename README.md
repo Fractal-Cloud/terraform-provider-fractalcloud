@@ -48,7 +48,7 @@ Live Systems are created by development teams using the Fractal SDK or Fractal C
 terraform {
   required_providers {
     fractalcloud = {
-      source  = "fractalcloud/fractalcloud"
+      source  = "fractalcloud/fc"
       version = "~> 0.1.0"
     }
   }

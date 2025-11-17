@@ -2,11 +2,15 @@ package provider
 
 import (
 	"context"
+	"os"
 
+	fractal_cloud "fractal.cloud/terraform-provider-fc/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -31,19 +35,109 @@ type fractalCloudProvider struct {
 	version string
 }
 
+// fractalCloudProviderModel maps provider schema data to a Go type.
+type fractalCloudProviderModel struct {
+	Host                 types.String `tfsdk:"host"`
+	ServiceAccountId     types.String `tfsdk:"service_account_id"`
+	ServiceAccountSecret types.String `tfsdk:"service_account_secret"`
+}
+
 // Metadata returns the provider type name.
 func (p *fractalCloudProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "fractalCloud"
+	resp.TypeName = "fractalcloud"
 	resp.Version = p.version
 }
 
 // Schema defines the provider-level schema for configuration data.
+// Schema defines the provider-level schema for configuration data.
 func (p *fractalCloudProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
-	resp.Schema = schema.Schema{}
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"host": schema.StringAttribute{
+				Optional: true,
+			},
+			"service_account_id": schema.StringAttribute{
+				Required: true,
+			},
+			"service_account_secret": schema.StringAttribute{
+				Required: true,
+			},
+		},
+	}
 }
 
-// Configure prepares a fractalCloud API client for data sources and resources.
 func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	// Retrieve provider data from configuration
+	var config fractalCloudProviderModel
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Default values to environment variables, but override
+	// with Terraform configuration value if set.
+
+	host := "https://api.fractal.cloud"
+	serviceAccountId := os.Getenv("FRACTAL_CLOUD_SERVICE_ACCOUNT_ID")
+	serviceAccountSecret := os.Getenv("FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET")
+
+	if !config.Host.IsNull() {
+		host = config.Host.ValueString()
+	}
+
+	if !config.ServiceAccountId.IsNull() {
+		serviceAccountId = config.ServiceAccountId.ValueString()
+	}
+
+	if !config.ServiceAccountSecret.IsNull() {
+		serviceAccountSecret = config.ServiceAccountSecret.ValueString()
+	}
+
+	if serviceAccountId == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("service_account_id"),
+			"Missing Fractal Cloud API Service Account Id",
+			"The provider cannot create the Fractal Cloud API client as there is a missing or empty value for the Fractal Cloud API Service Account Id. "+
+				"Set the username value in the configuration or use the FRACTAL_CLOUD_SERVICE_ACCOUNT_ID environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+	}
+
+	if serviceAccountSecret == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("password"),
+			"Missing Fractal Cloud API Password",
+			"The provider cannot create the Fractal Cloud API client as there is a missing or empty value for the Fractal Cloud API password. "+
+				"Set the password value in the configuration or use the Fractal FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create a new Fractal Cloud client using the configuration values
+	client, err := fractal_cloud.NewClient(&host, &serviceAccountId, &serviceAccountSecret)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Create Fractal Cloud API Client",
+			"An unexpected error occurred when creating the Fractal Cloud API client. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"Fractal Cloud Client Error: "+err.Error(),
+		)
+		return
+	}
+
+	// Make the Fractal Cloud client available during DataSource and Resource
+	// type Configure methods.
+	resp.DataSourceData = client
+	resp.ResourceData = client
 }
 
 // DataSources defines the data sources implemented in the provider.
@@ -53,5 +147,7 @@ func (p *fractalCloudProvider) DataSources(_ context.Context) []func() datasourc
 
 // Resources defines the resources implemented in the provider.
 func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Resource {
-	return nil
+	return []func() resource.Resource{
+		NewResourceGroup,
+	}
 }
