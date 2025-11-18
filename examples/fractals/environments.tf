@@ -1,6 +1,6 @@
 resource "fractalcloud_management_environment" "production" {
   type = "Personal"
-  owner_id = "29b195ed-ac8b-45bb-b8c5-5ee0fd542b11"
+  owner_id = "xxx"
   display_name = "Production"
   azure_agent = {
     region = "westeurope"
@@ -12,27 +12,27 @@ resource "fractalcloud_management_environment" "production" {
     organization_id = "xxx"
     project_id = "xxx"
   }
-  resource_groups = tolist([
+  resource_groups = [
     fractalcloud_resource_group.production.id
-  ])
+  ]
 }
 
 resource "fractalcloud_operational_environment" "toyota_production" {
   management_environment_id = fractalcloud_management_environment.production.id
   display_name = "Toyota Production"
   agents = ["Gcp"]
-  resource_groups = tolist([
+  resource_groups = [
     fractalcloud_resource_group.production_toyota.id
-  ])
+  ]
 }
 
 resource "fractalcloud_operational_environment" "audi_production" {
   management_environment_id = fractalcloud_management_environment.production.id
   display_name = "Audi Production"
   agents = ["Azure"]
-  resource_groups = tolist([
+  resource_groups = [
     fractalcloud_resource_group.production_audi.id
-  ])
+  ]
 }
 
 

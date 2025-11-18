@@ -2,7 +2,7 @@ resource "fractalcloud_fractal" "containerized" {
   resource_group_id = fractalcloud_resource_group.production_audi.id
   version = "1.0"
   description = "Microservice Fractal for our Organization"
-  blueprint_components = tolist([{
+  blueprint_components = [{
     id = "k8s-containerized"
     display_name = "Kubernetes cluster for workloads"
     type = "NetworkAndCompute.PaaS.ContainerPlatform"
@@ -32,9 +32,9 @@ resource "fractalcloud_fractal" "containerized" {
         "withStorage" = "10Gi"
       }
     }
-    links = tolist([])
-  }])
-  interface_operations = tolist([{
+    links = []
+  }]
+  interface_operations = [{
     name = "withExposedWorkload"
     parameters = ["workload, externalDns"]
     instructions = [{
@@ -47,6 +47,6 @@ resource "fractalcloud_fractal" "containerized" {
       operation = "exposeService"
       input_parameters = ["workload", "externalDns"]
     }]
-  }])
+  }]
 }
 
