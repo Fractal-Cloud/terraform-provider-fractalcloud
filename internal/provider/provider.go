@@ -151,5 +151,6 @@ func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Re
 		NewResourceGroup,
 		NewManagementEnvironment,
 		NewOperationalEnvironment,
+		NewFractal,
 	}
 }
