@@ -149,5 +149,7 @@ func (p *fractalCloudProvider) DataSources(_ context.Context) []func() datasourc
 func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewResourceGroup,
+		NewManagementEnvironment,
+		NewOperationalEnvironment,
 	}
 }
