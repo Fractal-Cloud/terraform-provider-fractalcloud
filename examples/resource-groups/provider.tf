@@ -8,6 +8,4 @@ terraform {
 }
 
 provider "fractalcloud" {
-  service_account_id = "xxx"
-  service_account_secret = "xxx"
 }

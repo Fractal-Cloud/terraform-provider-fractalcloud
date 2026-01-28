@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	fractal_cloud "fractal.cloud/terraform-provider-fc/internal/client"
+	"fractal.cloud/terraform-provider-fc/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -13,29 +13,29 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource              = &operationalEnvironment{}
-	_ resource.ResourceWithConfigure = &operationalEnvironment{}
+	_ resource.Resource              = &OperationalEnvironment{}
+	_ resource.ResourceWithConfigure = &OperationalEnvironment{}
 )
 
 // NewOperationalEnvironment is a helper function to simplify the provider implementation.
 func NewOperationalEnvironment() resource.Resource {
-	return &operationalEnvironment{}
+	return &OperationalEnvironment{}
 }
 
-// orderResource is the resource implementation.
-type operationalEnvironment struct {
-	client *fractal_cloud.Client
+// OperationalEnvironment orderResource is the resource implementation.
+type OperationalEnvironment struct {
+	client *fractalCloud.Client
 }
 
 // Configure adds the provider configured client to the resource.
-func (r *operationalEnvironment) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *OperationalEnvironment) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Add a nil check when handling ProviderData because Terraform
 	// sets that data after it calls the ConfigureProvider RPC.
 	if req.ProviderData == nil {
 		return
 	}
 
-	client, ok := req.ProviderData.(*fractal_cloud.Client)
+	client, ok := req.ProviderData.(*fractalCloud.Client)
 
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -50,12 +50,12 @@ func (r *operationalEnvironment) Configure(_ context.Context, req resource.Confi
 }
 
 // Metadata returns the resource type name.
-func (r *operationalEnvironment) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *OperationalEnvironment) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_operational_environment"
 }
 
 // Schema defines the schema for the resource.
-func (r *operationalEnvironment) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *OperationalEnvironment) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.ObjectAttribute{
@@ -118,17 +118,17 @@ func (r *operationalEnvironment) Schema(_ context.Context, _ resource.SchemaRequ
 }
 
 // Create creates the resource and sets the initial Terraform state.
-func (r *operationalEnvironment) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *OperationalEnvironment) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (r *operationalEnvironment) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *OperationalEnvironment) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
-func (r *operationalEnvironment) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *OperationalEnvironment) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
-func (r *operationalEnvironment) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *OperationalEnvironment) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 }

@@ -1,7 +1,12 @@
-package fractal_cloud
+package fractalCloud
 
 import (
+	"errors"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"slices"
 	"time"
 )
 
@@ -9,7 +14,6 @@ import (
 type Client struct {
 	HostURL    string
 	HTTPClient *http.Client
-	Token      string
 	Auth       AuthStruct
 }
 
@@ -27,7 +31,7 @@ type AuthResponse struct {
 }
 
 // NewClient -
-func NewClient(host *string, serviceAccountId *string, serviceAccountSecret *string) (*Client, error) {
+func NewClient(host *string, serviceAccountId *string, serviceAccountSecret *string) *Client {
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 		// Default Fractal Cloud URL
@@ -39,16 +43,33 @@ func NewClient(host *string, serviceAccountId *string, serviceAccountSecret *str
 		ServiceAccountSecret: *serviceAccountSecret,
 	}
 
-	ar, err := c.SignIn()
+	return &c
+}
+
+func (c *Client) doRequest(req *http.Request, acceptedResponseCodes []int) ([]byte, error) {
+	req.Header.Add("X-ClientID", c.Auth.ServiceAccountId)
+	req.Header.Add("X-ClientSecret", c.Auth.ServiceAccountSecret)
+
+	res, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Token = ar.Token
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Print(err)
+		}
+	}(res.Body)
 
-	return &c, nil
-}
+	bodyBytes, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, errors.New(fmt.Sprintf("[ClientId: %s] Response Code: %d. Impossible to read response body", c.Auth.ServiceAccountId, res.StatusCode))
+	}
 
-func (c *Client) doRequest(req *http.Request, authToken *string) ([]byte, error) {
-	return []byte("{}"), nil
+	if slices.Contains(acceptedResponseCodes, res.StatusCode) {
+		return bodyBytes, nil
+	}
+
+	return nil, errors.New(fmt.Sprintf("[ClientId: %s] received an unexpected response code: %d. Body: %s", c.Auth.ServiceAccountId, res.StatusCode, string(bodyBytes)))
 }

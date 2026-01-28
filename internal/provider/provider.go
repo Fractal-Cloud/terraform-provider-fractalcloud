@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	fractal_cloud "fractal.cloud/terraform-provider-fc/internal/client"
+	"fractal.cloud/terraform-provider-fc/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -57,10 +57,10 @@ func (p *fractalCloudProvider) Schema(_ context.Context, _ provider.SchemaReques
 				Optional: true,
 			},
 			"service_account_id": schema.StringAttribute{
-				Required: true,
+				Optional: true,
 			},
 			"service_account_secret": schema.StringAttribute{
-				Required: true,
+				Optional: true,
 			},
 		},
 	}
@@ -123,16 +123,7 @@ func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.Confi
 	}
 
 	// Create a new Fractal Cloud client using the configuration values
-	client, err := fractal_cloud.NewClient(&host, &serviceAccountId, &serviceAccountSecret)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Create Fractal Cloud API Client",
-			"An unexpected error occurred when creating the Fractal Cloud API client. "+
-				"If the error is not clear, please contact the provider developers.\n\n"+
-				"Fractal Cloud Client Error: "+err.Error(),
-		)
-		return
-	}
+	client := fractalCloud.NewClient(&host, &serviceAccountId, &serviceAccountSecret)
 
 	// Make the Fractal Cloud client available during DataSource and Resource
 	// type Configure methods.
@@ -142,7 +133,9 @@ func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.Confi
 
 // DataSources defines the data sources implemented in the provider.
 func (p *fractalCloudProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return nil
+	return []func() datasource.DataSource{
+		NewResourceGroupDataSource,
+	}
 }
 
 // Resources defines the resources implemented in the provider.
