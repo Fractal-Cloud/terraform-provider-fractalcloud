@@ -46,13 +46,14 @@ func NewClient(host *string, serviceAccountId *string, serviceAccountSecret *str
 	return &c
 }
 
-func (c *Client) doRequest(req *http.Request, acceptedResponseCodes []int) ([]byte, error) {
+func (c *Client) doRequest(req *http.Request, acceptedResponseCodes []int) (int, []byte, error) {
 	req.Header.Add("X-ClientID", c.Auth.ServiceAccountId)
 	req.Header.Add("X-ClientSecret", c.Auth.ServiceAccountSecret)
+	req.Header.Add("Content-Type", "application/json")
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -64,12 +65,12 @@ func (c *Client) doRequest(req *http.Request, acceptedResponseCodes []int) ([]by
 
 	bodyBytes, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("[ClientId: %s] Response Code: %d. Impossible to read response body", c.Auth.ServiceAccountId, res.StatusCode))
+		return 0, nil, errors.New(fmt.Sprintf("[ClientId: %s] Response Code: %d. Impossible to read response body", c.Auth.ServiceAccountId, res.StatusCode))
 	}
 
 	if slices.Contains(acceptedResponseCodes, res.StatusCode) {
-		return bodyBytes, nil
+		return res.StatusCode, bodyBytes, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("[ClientId: %s] received an unexpected response code: %d. Body: %s", c.Auth.ServiceAccountId, res.StatusCode, string(bodyBytes)))
+	return res.StatusCode, nil, errors.New(fmt.Sprintf("[ClientId: %s] received an unexpected response code: %d. Body: %s", c.Auth.ServiceAccountId, res.StatusCode, string(bodyBytes)))
 }

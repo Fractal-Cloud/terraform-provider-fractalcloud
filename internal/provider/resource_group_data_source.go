@@ -73,38 +73,26 @@ func (d *ResourceGroupsDataSource) Schema(_ context.Context, _ datasource.Schema
 			"description": schema.StringAttribute{
 				Computed: true,
 			},
-			"icon": schema.StringAttribute{
-				Computed: true,
-			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
 			},
-			"created_by": schema.StringAttribute{
-				Computed: true,
-			},
 			"updated_at": schema.StringAttribute{
-				Computed: true,
-			},
-			"updated_by": schema.StringAttribute{
 				Computed: true,
 			},
 		},
 	}
 }
 
-// ResourceGroupModel maps coffees schema data.
+// ResourceGroupModel maps resource group schema data.
 type ResourceGroupModel struct {
 	ID          ResourceGroupIdModel `tfsdk:"id"`
 	DisplayName types.String         `tfsdk:"display_name"`
 	Description types.String         `tfsdk:"description"`
-	Icon        types.String         `tfsdk:"icon"`
 	CreatedAt   types.String         `tfsdk:"created_at"`
-	CreatedBy   types.String         `tfsdk:"created_by"`
 	UpdatedAt   types.String         `tfsdk:"updated_at"`
-	UpdatedBy   types.String         `tfsdk:"updated_by"`
 }
 
-// ResourceGroupIdModel maps coffee ingredients data
+// ResourceGroupIdModel maps resource group id data
 type ResourceGroupIdModel struct {
 	Type      types.String `tfsdk:"type"`
 	OwnerId   types.String `tfsdk:"owner_id"`
@@ -140,8 +128,14 @@ func (d *ResourceGroupsDataSource) Read(ctx context.Context, req datasource.Read
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Cloud Resource Group",
-			"Could not read Fractal Cloud Resource Group ID "+config.ID.ValueString()+": "+err.Error(),
-		)
+			"Could not read Fractal Cloud Resource Group ID "+config.ID.ValueString()+": "+err.Error())
+		return
+	}
+
+	if resourceGroup == nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Fractal Cloud Resource Group",
+			"Could not find Fractal Cloud Resource Group ID "+config.ID.ValueString())
 		return
 	}
 
@@ -155,11 +149,8 @@ func (d *ResourceGroupsDataSource) Read(ctx context.Context, req datasource.Read
 		},
 		DisplayName: types.StringValue(resourceGroup.DisplayName),
 		Description: types.StringValue(resourceGroup.Description),
-		Icon:        types.StringValue(resourceGroup.Icon),
 		CreatedAt:   types.StringValue(resourceGroup.CreatedAt),
-		CreatedBy:   types.StringValue(resourceGroup.CreatedBy),
 		UpdatedAt:   types.StringValue(resourceGroup.UpdatedAt),
-		UpdatedBy:   types.StringValue(resourceGroup.UpdatedBy),
 	}
 
 	// Write state
