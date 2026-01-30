@@ -134,14 +134,17 @@ func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.Confi
 // DataSources defines the data sources implemented in the provider.
 func (p *fractalCloudProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewResourceGroupDataSource,
+		NewPersonalResourceGroupDataSource,
+		NewOrganizationalResourceGroupDataSource,
+		NewOrganizationDataSource,
 	}
 }
 
 // Resources defines the resources implemented in the provider.
 func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewResourceGroup,
+		NewPersonalResourceGroup,
+		NewOrganizationalResourceGroup,
 		NewManagementEnvironment,
 		NewOperationalEnvironment,
 		NewFractal,

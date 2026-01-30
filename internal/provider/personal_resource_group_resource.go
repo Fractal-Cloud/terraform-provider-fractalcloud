@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,22 +15,22 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource              = &ResourceGroupResource{}
-	_ resource.ResourceWithConfigure = &ResourceGroupResource{}
+	_ resource.Resource              = &PersonalResourceGroupResource{}
+	_ resource.ResourceWithConfigure = &PersonalResourceGroupResource{}
 )
 
-// NewResourceGroup is a helper function to simplify the provider implementation.
-func NewResourceGroup() resource.Resource {
-	return &ResourceGroupResource{}
+// NewPersonalResourceGroup is a helper function to simplify the provider implementation.
+func NewPersonalResourceGroup() resource.Resource {
+	return &PersonalResourceGroupResource{}
 }
 
-// ResourceGroupResource is the resource implementation.
-type ResourceGroupResource struct {
+// PersonalResourceGroupResource is the resource implementation.
+type PersonalResourceGroupResource struct {
 	client *fractalCloud.Client
 }
 
 // Configure adds the provider configured client to the resource.
-func (r *ResourceGroupResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *PersonalResourceGroupResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	// Add a nil check when handling ProviderData because Terraform
 	// sets that data after it calls the ConfigureProvider RPC.
 	if req.ProviderData == nil {
@@ -53,27 +52,36 @@ func (r *ResourceGroupResource) Configure(_ context.Context, req resource.Config
 }
 
 // Metadata returns the resource type name.
-func (r *ResourceGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_resource_group"
+func (r *PersonalResourceGroupResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_personal_resource_group"
 }
 
 // Schema defines the schema for the resource.
-func (r *ResourceGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *PersonalResourceGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.ObjectAttribute{
+			"short_name": schema.StringAttribute{
 				Required: true,
-				AttributeTypes: map[string]attr.Type{
-					"type":      basetypes.StringType{},
-					"owner_id":  basetypes.StringType{},
-					"shortname": basetypes.StringType{},
-				},
 			},
 			"display_name": schema.StringAttribute{
 				Optional: true,
 			},
 			"description": schema.StringAttribute{
 				Optional: true,
+			},
+			"status": schema.StringAttribute{
+				Computed: true,
+			},
+			"icon": schema.StringAttribute{
+				Optional: true,
+			},
+			"live_systems_ids": schema.ListAttribute{
+				Computed:    true,
+				ElementType: basetypes.StringType{},
+			},
+			"fractals_ids": schema.ListAttribute{
+				Computed:    true,
+				ElementType: basetypes.StringType{},
 			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
@@ -86,9 +94,9 @@ func (r *ResourceGroupResource) Schema(_ context.Context, _ resource.SchemaReque
 }
 
 // Create creates the resource and sets the initial Terraform state.
-func (r *ResourceGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *PersonalResourceGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	// Retrieve values from plan
-	var plan ResourceGroupModel
+	var plan PersonalResourceGroupModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -115,9 +123,9 @@ func (r *ResourceGroupResource) Create(ctx context.Context, req resource.CreateR
 }
 
 // Read refreshes the Terraform state with the latest data.
-func (r *ResourceGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *PersonalResourceGroupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	// Get current state
-	var state ResourceGroupModel
+	var state PersonalResourceGroupModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -125,25 +133,35 @@ func (r *ResourceGroupResource) Read(ctx context.Context, req resource.ReadReque
 	}
 
 	resourceGroupId := fractalCloud.ResourceGroupId{
-		Type:      state.ID.Type.ValueString(),
-		OwnerId:   state.ID.OwnerId.ValueString(),
-		ShortName: state.ID.ShortName.ValueString(),
+		Type:      "Personal",
+		ShortName: state.ShortName.ValueString(),
 	}
-	resourceGroup, err := r.client.GetResourceGroup(resourceGroupId)
+	resourceGroup, err := r.client.GetPersonalResourceGroup(resourceGroupId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Cloud Resource Group",
-			"Could not read Fractal Cloud Resource Group ID "+state.ID.ValueString()+": "+err.Error(),
+			"Could not read Fractal Cloud Resource Group ID "+state.ShortName.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	if resourceGroup != nil {
 		// Overwrite state
+		fractalsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.FractalsIds)
+		resp.Diagnostics.Append(diags...)
+
+		liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
+		resp.Diagnostics.Append(diags...)
+
 		state.DisplayName = types.StringValue(resourceGroup.DisplayName)
 		state.Description = types.StringValue(resourceGroup.Description)
+		state.Status = types.StringValue(resourceGroup.Status)
+		state.Icon = types.StringValue(resourceGroup.Icon)
+		state.FractalsIds = fractalsIds
+		state.LiveSystemsIds = liveSystemsIds
 		state.CreatedAt = types.StringValue(resourceGroup.CreatedAt)
 		state.UpdatedAt = types.StringValue(resourceGroup.UpdatedAt)
+
 	}
 
 	// Set refreshed state
@@ -155,8 +173,8 @@ func (r *ResourceGroupResource) Read(ctx context.Context, req resource.ReadReque
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
-func (r *ResourceGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan ResourceGroupModel
+func (r *PersonalResourceGroupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan PersonalResourceGroupModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -185,9 +203,9 @@ func (r *ResourceGroupResource) Update(ctx context.Context, req resource.UpdateR
 }
 
 // Delete deletes the resource and removes the Terraform state on success.
-func (r *ResourceGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *PersonalResourceGroupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// Retrieve values from state
-	var state ResourceGroupModel
+	var state PersonalResourceGroupModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -195,13 +213,12 @@ func (r *ResourceGroupResource) Delete(ctx context.Context, req resource.DeleteR
 	}
 
 	resourceGroupId := fractalCloud.ResourceGroupId{
-		Type:      state.ID.Type.ValueString(),
-		OwnerId:   state.ID.OwnerId.ValueString(),
-		ShortName: state.ID.ShortName.ValueString(),
+		Type:      "Personal",
+		ShortName: state.ShortName.ValueString(),
 	}
 
 	// Delete existing order
-	err := r.client.DeleteResourceGroup(resourceGroupId)
+	err := r.client.DeletePersonalResourceGroup(resourceGroupId)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting Fractal Cloud Resource Group",
@@ -211,27 +228,26 @@ func (r *ResourceGroupResource) Delete(ctx context.Context, req resource.DeleteR
 	}
 }
 
-func UpsertResourceGroup(plan ResourceGroupModel, r *ResourceGroupResource) (*ResourceGroupModel, error) {
+func UpsertResourceGroup(plan PersonalResourceGroupModel, r *PersonalResourceGroupResource) (*PersonalResourceGroupModel, error) {
 	// Generate API request body from plan
-	var resourceGroup = fractalCloud.ResourceGroup{
+	var resourceGroup = fractalCloud.PersonalResourceGroup{
 		ID: fractalCloud.ResourceGroupId{
-			Type:      plan.ID.Type.ValueString(),
-			OwnerId:   plan.ID.OwnerId.ValueString(),
-			ShortName: plan.ID.ShortName.ValueString(),
+			Type:      "Personal",
+			ShortName: plan.ShortName.ValueString(),
 		},
 		DisplayName: plan.DisplayName.ValueString(),
 		Description: plan.Description.ValueString(),
 	}
 
 	// Create new order
-	err := r.client.UpsertResourceGroup(resourceGroup)
+	err := r.client.UpsertPersonalResourceGroup(resourceGroup)
 	if err != nil {
 		return nil, err
 	}
 
 	plan.UpdatedAt = types.StringValue(time.Now().Format(time.RFC850))
 
-	updatedResourceGroup, err := r.client.GetResourceGroup(resourceGroup.ID)
+	updatedResourceGroup, err := r.client.GetPersonalResourceGroup(resourceGroup.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -240,8 +256,8 @@ func UpsertResourceGroup(plan ResourceGroupModel, r *ResourceGroupResource) (*Re
 		return nil, errors.New("resource group not found after upsert")
 	}
 
-	return &ResourceGroupModel{
-		ID:          plan.ID,
+	return &PersonalResourceGroupModel{
+		ShortName:   plan.ShortName,
 		DisplayName: types.StringValue(updatedResourceGroup.DisplayName),
 		Description: types.StringValue(updatedResourceGroup.Description),
 		CreatedAt:   types.StringValue(updatedResourceGroup.CreatedAt),
