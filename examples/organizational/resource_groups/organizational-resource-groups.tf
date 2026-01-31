@@ -14,6 +14,10 @@ data "fractalcloud_organizational_resource_group" "existing_resource_group" {
   organization_id = data.fractalcloud_organization.existing_org.id
 }
 
+output "production_org" {
+  value = data.fractalcloud_organization.existing_org
+}
+
 output "production_rg" {
   value = data.fractalcloud_organizational_resource_group.existing_resource_group
 }

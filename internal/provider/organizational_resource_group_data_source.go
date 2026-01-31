@@ -154,6 +154,7 @@ func (d *OrganizationalResourceGroupsDataSource) Read(ctx context.Context, req d
 	}
 	var resourceGroupId = fractalCloud.ResourceGroupId{
 		Type:      "Organizational",
+		OwnerID:   config.OrganizationId.ValueString(),
 		ShortName: config.ShortName.ValueString(),
 	}
 

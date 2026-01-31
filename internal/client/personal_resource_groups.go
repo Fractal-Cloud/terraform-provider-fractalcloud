@@ -4,21 +4,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
 // GetPersonalResourceGroup - Returns specific resource group
 func (c *Client) GetPersonalResourceGroup(resourceGroupID ResourceGroupId) (*PersonalResourceGroup, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/accounts/me/resourcegroups/%s",
-		c.HostURL, resourceGroupID.ShortName), nil)
+	path := fmt.Sprintf("%s/accounts/me/resourcegroups/%s",
+		c.HostURL, resourceGroupID.ShortName)
+	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	c.logDebug("Calling GET " + path)
 
 	resCode, body, err := c.doRequest(req, []int{200, 404})
 	if err != nil {
 		return nil, err
 	}
+
+	c.logDebug("Response code: " + strconv.Itoa(resCode))
 
 	if resCode == 404 {
 		return nil, nil
@@ -31,7 +37,7 @@ func (c *Client) GetPersonalResourceGroup(resourceGroupID ResourceGroupId) (*Per
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &resourceGroup, nil
 }
 

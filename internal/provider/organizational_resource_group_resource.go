@@ -134,9 +134,19 @@ func (r *OrganizationalResourceGroupResource) Create(ctx context.Context, req re
 	}
 
 	if createdResourceGroup != nil {
-		plan.CreatedAt = createdResourceGroup.CreatedAt
+		plan.DisplayName = createdResourceGroup.DisplayName
 		plan.Description = createdResourceGroup.Description
+		plan.Status = createdResourceGroup.Status
+		plan.Icon = createdResourceGroup.Icon
+		plan.MembersIds = createdResourceGroup.MembersIds
+		plan.ManagersIds = createdResourceGroup.ManagersIds
+		plan.TeamsIds = createdResourceGroup.TeamsIds
+		plan.FractalsIds = createdResourceGroup.FractalsIds
+		plan.LiveSystemsIds = createdResourceGroup.LiveSystemsIds
+		plan.CreatedAt = createdResourceGroup.CreatedAt
+		plan.CreatedBy = createdResourceGroup.CreatedBy
 		plan.UpdatedAt = createdResourceGroup.UpdatedAt
+		plan.UpdatedBy = createdResourceGroup.UpdatedBy
 	}
 
 	// Set state to fully populated data
@@ -228,12 +238,19 @@ func (r *OrganizationalResourceGroupResource) Update(ctx context.Context, req re
 	}
 
 	if updatedResourceGroup != nil {
-		plan.CreatedAt = updatedResourceGroup.CreatedAt
+		plan.DisplayName = updatedResourceGroup.DisplayName
 		plan.Description = updatedResourceGroup.Description
-		plan.UpdatedAt = updatedResourceGroup.UpdatedAt
+		plan.Status = updatedResourceGroup.Status
 		plan.Icon = updatedResourceGroup.Icon
+		plan.MembersIds = updatedResourceGroup.MembersIds
+		plan.ManagersIds = updatedResourceGroup.ManagersIds
+		plan.TeamsIds = updatedResourceGroup.TeamsIds
 		plan.FractalsIds = updatedResourceGroup.FractalsIds
 		plan.LiveSystemsIds = updatedResourceGroup.LiveSystemsIds
+		plan.CreatedAt = updatedResourceGroup.CreatedAt
+		plan.CreatedBy = updatedResourceGroup.CreatedBy
+		plan.UpdatedAt = updatedResourceGroup.UpdatedAt
+		plan.UpdatedBy = updatedResourceGroup.UpdatedBy
 	}
 
 	diags = resp.State.Set(ctx, plan)
@@ -303,36 +320,58 @@ func UpsertOrganizationalResourceGroup(
 		return nil, errors.New("organizational resource group not found after upsert")
 	}
 
-	membersIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.MembersIds)
+	membersIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.MembersIds)
 	diagnostics.Append(diags...)
 
-	teamsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.TeamsIds)
+	teamsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.TeamsIds)
 	diagnostics.Append(diags...)
 
-	managersIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.ManagersIds)
+	managersIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.ManagersIds)
 	diagnostics.Append(diags...)
 
-	fractalsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.FractalsIds)
+	fractalsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.FractalsIds)
 	diagnostics.Append(diags...)
 
-	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
+	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.LiveSystemsIds)
 	diagnostics.Append(diags...)
 
-	return &OrganizationalResourceGroupModel{
-		ShortName:      types.StringValue(resourceGroup.ID.ShortName),
-		OrganizationId: types.StringValue(resourceGroup.ID.ShortName),
-		DisplayName:    types.StringValue(resourceGroup.DisplayName),
-		Description:    types.StringValue(resourceGroup.Description),
-		Status:         types.StringValue(resourceGroup.Status),
-		Icon:           types.StringValue(resourceGroup.Icon),
-		MembersIds:     membersIds,
-		TeamsIds:       teamsIds,
-		ManagersIds:    managersIds,
+	var result = &OrganizationalResourceGroupModel{
+		ShortName:      types.StringValue(updatedResourceGroup.ID.ShortName),
+		OrganizationId: types.StringValue(updatedResourceGroup.ID.ShortName),
+		DisplayName:    types.StringValue(updatedResourceGroup.DisplayName),
+		Description:    types.StringValue(updatedResourceGroup.Description),
+		Status:         types.StringValue(updatedResourceGroup.Status),
 		FractalsIds:    fractalsIds,
 		LiveSystemsIds: liveSystemsIds,
-		CreatedAt:      types.StringValue(resourceGroup.CreatedAt),
-		CreatedBy:      types.StringValue(resourceGroup.CreatedBy),
-		UpdatedAt:      types.StringValue(resourceGroup.UpdatedAt),
-		UpdatedBy:      types.StringValue(resourceGroup.UpdatedBy),
-	}, nil
+		CreatedAt:      types.StringValue(updatedResourceGroup.CreatedAt),
+		CreatedBy:      types.StringValue(updatedResourceGroup.CreatedBy),
+		UpdatedAt:      types.StringValue(updatedResourceGroup.UpdatedAt),
+		UpdatedBy:      types.StringValue(updatedResourceGroup.UpdatedBy),
+	}
+
+	if len(updatedResourceGroup.Icon) > 0 {
+		result.Icon = types.StringValue(updatedResourceGroup.Icon)
+	} else {
+		result.Icon = plan.Icon
+	}
+
+	if len(updatedResourceGroup.MembersIds) > 0 {
+		result.MembersIds = membersIds
+	} else {
+		result.MembersIds = plan.MembersIds
+	}
+
+	if len(updatedResourceGroup.TeamsIds) > 0 {
+		result.TeamsIds = teamsIds
+	} else {
+		result.TeamsIds = plan.TeamsIds
+	}
+
+	if len(updatedResourceGroup.ManagersIds) > 0 {
+		result.ManagersIds = managersIds
+	} else {
+		result.ManagersIds = plan.ManagersIds
+	}
+
+	return result, nil
 }

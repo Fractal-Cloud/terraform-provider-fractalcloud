@@ -27,7 +27,7 @@ type OrganizationalResourceGroup struct {
 	MembersIds     []string        `json:"membersIds"`
 	TeamsIds       []string        `json:"teamsIds"`
 	ManagersIds    []string        `json:"managersIds"`
-	LiveSystemsIds []string        `json:"liveSystems"`
+	LiveSystemsIds []string        `json:"livesystems"`
 	FractalsIds    []string        `json:"fractals"`
 	CreatedAt      string          `json:"createdAt"`
 	CreatedBy      string          `json:"createdBy"`

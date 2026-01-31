@@ -284,8 +284,11 @@ func UpsertResourceGroup(
 		CreatedAt:      types.StringValue(updatedResourceGroup.CreatedAt),
 		UpdatedAt:      types.StringValue(updatedResourceGroup.UpdatedAt),
 	}
+
 	if len(updatedResourceGroup.Icon) > 0 {
 		result.Icon = types.StringValue(updatedResourceGroup.Icon)
+	} else {
+		result.Icon = plan.Icon
 	}
 
 	return result, nil
