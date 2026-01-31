@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -103,7 +104,7 @@ func (r *PersonalResourceGroupResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	createdResourceGroup, err := UpsertResourceGroup(plan, r)
+	createdResourceGroup, err := UpsertResourceGroup(ctx, diags, plan, r)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating or updating Fractal Resource Group",
@@ -115,6 +116,10 @@ func (r *PersonalResourceGroupResource) Create(ctx context.Context, req resource
 		plan.CreatedAt = createdResourceGroup.CreatedAt
 		plan.Description = createdResourceGroup.Description
 		plan.UpdatedAt = createdResourceGroup.UpdatedAt
+		plan.Status = createdResourceGroup.Status
+		plan.Icon = createdResourceGroup.Icon
+		plan.FractalsIds = createdResourceGroup.FractalsIds
+		plan.LiveSystemsIds = createdResourceGroup.LiveSystemsIds
 	}
 
 	// Set state to fully populated data
@@ -161,7 +166,6 @@ func (r *PersonalResourceGroupResource) Read(ctx context.Context, req resource.R
 		state.LiveSystemsIds = liveSystemsIds
 		state.CreatedAt = types.StringValue(resourceGroup.CreatedAt)
 		state.UpdatedAt = types.StringValue(resourceGroup.UpdatedAt)
-
 	}
 
 	// Set refreshed state
@@ -181,7 +185,7 @@ func (r *PersonalResourceGroupResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	updatedResourceGroup, err := UpsertResourceGroup(plan, r)
+	updatedResourceGroup, err := UpsertResourceGroup(ctx, diags, plan, r)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating or updating Fractal Resource Group",
@@ -193,6 +197,10 @@ func (r *PersonalResourceGroupResource) Update(ctx context.Context, req resource
 		plan.CreatedAt = updatedResourceGroup.CreatedAt
 		plan.Description = updatedResourceGroup.Description
 		plan.UpdatedAt = updatedResourceGroup.UpdatedAt
+		plan.Status = updatedResourceGroup.Status
+		plan.Icon = updatedResourceGroup.Icon
+		plan.FractalsIds = updatedResourceGroup.FractalsIds
+		plan.LiveSystemsIds = updatedResourceGroup.LiveSystemsIds
 	}
 
 	diags = resp.State.Set(ctx, plan)
@@ -228,7 +236,11 @@ func (r *PersonalResourceGroupResource) Delete(ctx context.Context, req resource
 	}
 }
 
-func UpsertResourceGroup(plan PersonalResourceGroupModel, r *PersonalResourceGroupResource) (*PersonalResourceGroupModel, error) {
+func UpsertResourceGroup(
+	ctx context.Context,
+	diagnostics diag.Diagnostics,
+	plan PersonalResourceGroupModel,
+	r *PersonalResourceGroupResource) (*PersonalResourceGroupModel, error) {
 	// Generate API request body from plan
 	var resourceGroup = fractalCloud.PersonalResourceGroup{
 		ID: fractalCloud.ResourceGroupId{
@@ -256,11 +268,25 @@ func UpsertResourceGroup(plan PersonalResourceGroupModel, r *PersonalResourceGro
 		return nil, errors.New("resource group not found after upsert")
 	}
 
-	return &PersonalResourceGroupModel{
-		ShortName:   plan.ShortName,
-		DisplayName: types.StringValue(updatedResourceGroup.DisplayName),
-		Description: types.StringValue(updatedResourceGroup.Description),
-		CreatedAt:   types.StringValue(updatedResourceGroup.CreatedAt),
-		UpdatedAt:   types.StringValue(updatedResourceGroup.UpdatedAt),
-	}, nil
+	fractalsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.FractalsIds)
+	diagnostics.Append(diags...)
+
+	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.LiveSystemsIds)
+	diagnostics.Append(diags...)
+
+	var result = &PersonalResourceGroupModel{
+		ShortName:      plan.ShortName,
+		DisplayName:    types.StringValue(updatedResourceGroup.DisplayName),
+		Description:    types.StringValue(updatedResourceGroup.Description),
+		Status:         types.StringValue(updatedResourceGroup.Status),
+		LiveSystemsIds: liveSystemsIds,
+		FractalsIds:    fractalsIds,
+		CreatedAt:      types.StringValue(updatedResourceGroup.CreatedAt),
+		UpdatedAt:      types.StringValue(updatedResourceGroup.UpdatedAt),
+	}
+	if len(updatedResourceGroup.Icon) > 0 {
+		result.Icon = types.StringValue(updatedResourceGroup.Icon)
+	}
+
+	return result, nil
 }

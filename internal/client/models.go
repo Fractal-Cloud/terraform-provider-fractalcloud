@@ -12,7 +12,7 @@ type PersonalResourceGroup struct {
 	Status         string          `json:"status"`
 	Description    string          `json:"description"`
 	Icon           string          `json:"icon"`
-	LiveSystemsIds []string        `json:"liveSystems"`
+	LiveSystemsIds []string        `json:"livesystems"`
 	FractalsIds    []string        `json:"fractals"`
 	CreatedAt      string          `json:"createdAt"`
 	UpdatedAt      string          `json:"updatedAt"`

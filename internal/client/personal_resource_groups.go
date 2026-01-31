@@ -24,12 +24,14 @@ func (c *Client) GetPersonalResourceGroup(resourceGroupID ResourceGroupId) (*Per
 		return nil, nil
 	}
 
+	c.logDebug(string(body))
+
 	resourceGroup := PersonalResourceGroup{}
 	err = json.Unmarshal(body, &resourceGroup)
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return &resourceGroup, nil
 }
 

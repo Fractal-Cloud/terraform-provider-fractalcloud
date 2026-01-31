@@ -171,11 +171,35 @@ func (r *OrganizationalResourceGroupResource) Read(ctx context.Context, req reso
 	}
 
 	if resourceGroup != nil {
+		membersIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.MembersIds)
+		resp.Diagnostics.Append(diags...)
+
+		teamsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.TeamsIds)
+		resp.Diagnostics.Append(diags...)
+
+		managersIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.ManagersIds)
+		resp.Diagnostics.Append(diags...)
+
+		fractalsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.FractalsIds)
+		resp.Diagnostics.Append(diags...)
+
+		liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
+		resp.Diagnostics.Append(diags...)
+
 		// Overwrite state
 		state.DisplayName = types.StringValue(resourceGroup.DisplayName)
 		state.Description = types.StringValue(resourceGroup.Description)
+		state.Status = types.StringValue(resourceGroup.Status)
+		state.Icon = types.StringValue(resourceGroup.Icon)
+		state.MembersIds = membersIds
+		state.TeamsIds = teamsIds
+		state.ManagersIds = managersIds
+		state.FractalsIds = fractalsIds
+		state.LiveSystemsIds = liveSystemsIds
 		state.CreatedAt = types.StringValue(resourceGroup.CreatedAt)
+		state.CreatedBy = types.StringValue(resourceGroup.CreatedBy)
 		state.UpdatedAt = types.StringValue(resourceGroup.UpdatedAt)
+		state.UpdatedBy = types.StringValue(resourceGroup.UpdatedBy)
 	}
 
 	// Set refreshed state
@@ -207,6 +231,9 @@ func (r *OrganizationalResourceGroupResource) Update(ctx context.Context, req re
 		plan.CreatedAt = updatedResourceGroup.CreatedAt
 		plan.Description = updatedResourceGroup.Description
 		plan.UpdatedAt = updatedResourceGroup.UpdatedAt
+		plan.Icon = updatedResourceGroup.Icon
+		plan.FractalsIds = updatedResourceGroup.FractalsIds
+		plan.LiveSystemsIds = updatedResourceGroup.LiveSystemsIds
 	}
 
 	diags = resp.State.Set(ctx, plan)

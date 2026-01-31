@@ -15,5 +15,5 @@ data "fractalcloud_organizational_resource_group" "existing_resource_group" {
 }
 
 output "production_rg" {
-  value = data.fractalcloud_personal_resource_group.existing_resource_group
+  value = data.fractalcloud_organizational_resource_group.existing_resource_group
 }

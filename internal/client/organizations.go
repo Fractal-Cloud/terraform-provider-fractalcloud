@@ -22,6 +22,8 @@ func (c *Client) GetOrganization(organizationID string) (*Organization, error) {
 		return nil, nil
 	}
 
+	c.logDebug(string(body))
+
 	organization := Organization{}
 	err = json.Unmarshal(body, &organization)
 	if err != nil {

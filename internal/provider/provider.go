@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -123,7 +124,20 @@ func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.Confi
 	}
 
 	// Create a new Fractal Cloud client using the configuration values
-	client := fractalCloud.NewClient(&host, &serviceAccountId, &serviceAccountSecret)
+	client := fractalCloud.NewClient(&fractalCloud.ClientLogger{
+		Debug: func(s string) {
+			tflog.Debug(ctx, s)
+		},
+		Information: func(s string) {
+			tflog.Info(ctx, s)
+		},
+		Warning: func(s string) {
+			tflog.Warn(ctx, s)
+		},
+		Error: func(s string) {
+			tflog.Error(ctx, s)
+		},
+	}, &host, &serviceAccountId, &serviceAccountSecret)
 
 	// Make the Fractal Cloud client available during DataSource and Resource
 	// type Configure methods.

@@ -24,6 +24,8 @@ func (c *Client) GetOrganizationalResourceGroup(resourceGroupID ResourceGroupId)
 		return nil, nil
 	}
 
+	c.logDebug(string(body))
+
 	resourceGroup := OrganizationalResourceGroup{}
 	err = json.Unmarshal(body, &resourceGroup)
 	if err != nil {

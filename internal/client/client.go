@@ -15,6 +15,14 @@ type Client struct {
 	HostURL    string
 	HTTPClient *http.Client
 	Auth       AuthStruct
+	Logger     *ClientLogger
+}
+
+type ClientLogger struct {
+	Debug       func(string)
+	Information func(string)
+	Warning     func(string)
+	Error       func(string)
 }
 
 // AuthStruct -
@@ -31,11 +39,12 @@ type AuthResponse struct {
 }
 
 // NewClient -
-func NewClient(host *string, serviceAccountId *string, serviceAccountSecret *string) *Client {
+func NewClient(logger *ClientLogger, host *string, serviceAccountId *string, serviceAccountSecret *string) *Client {
 	c := Client{
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 		// Default Fractal Cloud URL
 		HostURL: *host,
+		Logger:  logger,
 	}
 
 	c.Auth = AuthStruct{
