@@ -8,8 +8,8 @@ import (
 )
 
 // GetOrganization - Returns specific resource group
-func (c *Client) GetOrganization(organizationID string) (*Organization, error) {
-	path := fmt.Sprintf("%s/organizations/%s", c.HostURL, organizationID)
+func (c *Client) GetOrganization(organizationId string) (*Organization, error) {
+	path := fmt.Sprintf("%s/organizations/%s", c.HostURL, organizationId)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, err

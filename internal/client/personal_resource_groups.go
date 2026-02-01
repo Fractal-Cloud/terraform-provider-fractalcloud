@@ -9,9 +9,9 @@ import (
 )
 
 // GetPersonalResourceGroup - Returns specific resource group
-func (c *Client) GetPersonalResourceGroup(resourceGroupID ResourceGroupId) (*PersonalResourceGroup, error) {
+func (c *Client) GetPersonalResourceGroup(resourceGroupId ResourceGroupId) (*PersonalResourceGroup, error) {
 	path := fmt.Sprintf("%s/accounts/me/resourcegroups/%s",
-		c.HostURL, resourceGroupID.ShortName)
+		c.HostURL, resourceGroupId.ShortName)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ type UpsertPersonalResourceGroupRequestBody struct {
 }
 
 func (c *Client) UpsertPersonalResourceGroup(resourceGroup PersonalResourceGroup) error {
-	resourceGroupID := resourceGroup.ID
+	resourceGroupId := resourceGroup.Id
 
 	requestBody := UpsertPersonalResourceGroupRequestBody{
 		DisplayName: resourceGroup.DisplayName,
@@ -60,7 +60,7 @@ func (c *Client) UpsertPersonalResourceGroup(resourceGroup PersonalResourceGroup
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/accounts/me/resourcegroups/%s",
-		c.HostURL, resourceGroupID.ShortName), strings.NewReader(string(rb)))
+		c.HostURL, resourceGroupId.ShortName), strings.NewReader(string(rb)))
 	if err != nil {
 		return err
 	}
@@ -69,9 +69,9 @@ func (c *Client) UpsertPersonalResourceGroup(resourceGroup PersonalResourceGroup
 	return err
 }
 
-func (c *Client) DeletePersonalResourceGroup(resourceGroupID ResourceGroupId) error {
+func (c *Client) DeletePersonalResourceGroup(resourceGroupId ResourceGroupId) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/accounts/me/resourcegroups/%s",
-		c.HostURL, resourceGroupID.ShortName), nil)
+		c.HostURL, resourceGroupId.ShortName), nil)
 	if err != nil {
 		return err
 	}

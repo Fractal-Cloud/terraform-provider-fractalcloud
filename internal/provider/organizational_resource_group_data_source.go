@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -57,6 +58,14 @@ func (d *OrganizationalResourceGroupsDataSource) Metadata(_ context.Context, req
 func (d *OrganizationalResourceGroupsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.ObjectAttribute{
+				Computed: true,
+				AttributeTypes: map[string]attr.Type{
+					"type":       basetypes.StringType{},
+					"owner_id":   basetypes.StringType{},
+					"short_name": basetypes.StringType{},
+				},
+			},
 			"short_name": schema.StringAttribute{
 				Required: true,
 			},
@@ -113,6 +122,7 @@ func (d *OrganizationalResourceGroupsDataSource) Schema(_ context.Context, _ dat
 
 // OrganizationalResourceGroupModel maps resource group schema data.
 type OrganizationalResourceGroupModel struct {
+	Id             types.Object `tfsdk:"id"`
 	ShortName      types.String `tfsdk:"short_name"`
 	OrganizationId types.String `tfsdk:"organization_id"`
 	DisplayName    types.String `tfsdk:"display_name"`
@@ -154,7 +164,7 @@ func (d *OrganizationalResourceGroupsDataSource) Read(ctx context.Context, req d
 	}
 	var resourceGroupId = fractalCloud.ResourceGroupId{
 		Type:      "Organizational",
-		OwnerID:   config.OrganizationId.ValueString(),
+		OwnerId:   config.OrganizationId.ValueString(),
 		ShortName: config.ShortName.ValueString(),
 	}
 
@@ -169,7 +179,7 @@ func (d *OrganizationalResourceGroupsDataSource) Read(ctx context.Context, req d
 	if resourceGroup == nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Cloud Resource Group",
-			"Could not find Fractal Cloud Resource Group ID "+config.ShortName.ValueString())
+			"Could not find Fractal Cloud Resource Group Id "+config.ShortName.ValueString())
 		return
 	}
 
@@ -188,11 +198,21 @@ func (d *OrganizationalResourceGroupsDataSource) Read(ctx context.Context, req d
 	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
 	resp.Diagnostics.Append(diags...)
 
+	idTypes := map[string]attr.Type{
+		"type":       types.StringType,
+		"owner_id":   types.StringType,
+		"short_name": types.StringType,
+	}
+
 	// Build state
 	state := OrganizationalResourceGroupModel{
-		// For data sources, the `id` in state should be stable. Often it's the same as input.
-		ShortName:      types.StringValue(resourceGroup.ID.ShortName),
-		OrganizationId: types.StringValue(resourceGroup.ID.ShortName),
+		Id: types.ObjectValueMust(idTypes, map[string]attr.Value{
+			"type":       types.StringValue(resourceGroup.Id.Type),
+			"owner_id":   types.StringValue(resourceGroup.Id.OwnerId),
+			"short_name": types.StringValue(resourceGroup.Id.ShortName),
+		}),
+		ShortName:      types.StringValue(resourceGroup.Id.ShortName),
+		OrganizationId: types.StringValue(resourceGroup.Id.OwnerId),
 		DisplayName:    types.StringValue(resourceGroup.DisplayName),
 		Description:    types.StringValue(resourceGroup.Description),
 		Status:         types.StringValue(resourceGroup.Status),

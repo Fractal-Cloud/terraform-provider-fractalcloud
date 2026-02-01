@@ -33,7 +33,7 @@ type AuthStruct struct {
 
 // AuthResponse -
 type AuthResponse struct {
-	UserID           int    `json:"user_id"`
+	UserId           int    `json:"user_id"`
 	ServiceAccountId string `json:"ServiceAccountId"`
 	Token            string `json:"token"`
 }

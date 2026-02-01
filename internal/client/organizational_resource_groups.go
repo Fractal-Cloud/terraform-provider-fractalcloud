@@ -9,9 +9,9 @@ import (
 )
 
 // GetOrganizationalResourceGroup - Returns specific organizational resource group
-func (c *Client) GetOrganizationalResourceGroup(resourceGroupID ResourceGroupId) (*OrganizationalResourceGroup, error) {
+func (c *Client) GetOrganizationalResourceGroup(resourceGroupId ResourceGroupId) (*OrganizationalResourceGroup, error) {
 	path := fmt.Sprintf("%s/organizations/%s/resourcegroups/%s",
-		c.HostURL, resourceGroupID.OwnerID, resourceGroupID.ShortName)
+		c.HostURL, resourceGroupId.OwnerId, resourceGroupId.ShortName)
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ type UpsertOrganizationalResourceGroupRequestBody struct {
 }
 
 func (c *Client) UpsertOrganizationalResourceGroup(resourceGroup OrganizationalResourceGroup) error {
-	resourceGroupID := resourceGroup.ID
+	resourceGroupId := resourceGroup.Id
 
 	requestBody := UpsertOrganizationalResourceGroupRequestBody{
 		DisplayName: resourceGroup.DisplayName,
@@ -60,7 +60,7 @@ func (c *Client) UpsertOrganizationalResourceGroup(resourceGroup OrganizationalR
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/organizations/%s/resourcegroups/%s",
-		c.HostURL, resourceGroupID.OwnerID, resourceGroupID.ShortName), strings.NewReader(string(rb)))
+		c.HostURL, resourceGroupId.OwnerId, resourceGroupId.ShortName), strings.NewReader(string(rb)))
 	if err != nil {
 		return err
 	}
@@ -69,9 +69,9 @@ func (c *Client) UpsertOrganizationalResourceGroup(resourceGroup OrganizationalR
 	return err
 }
 
-func (c *Client) DeleteOrganizationalResourceGroup(resourceGroupID ResourceGroupId) error {
+func (c *Client) DeleteOrganizationalResourceGroup(resourceGroupId ResourceGroupId) error {
 	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/organizations/%s/resourcegroups/%s",
-		c.HostURL, resourceGroupID.OwnerID, resourceGroupID.ShortName), nil)
+		c.HostURL, resourceGroupId.OwnerId, resourceGroupId.ShortName), nil)
 	if err != nil {
 		return err
 	}

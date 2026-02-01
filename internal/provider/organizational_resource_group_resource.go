@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -61,6 +62,14 @@ func (r *OrganizationalResourceGroupResource) Metadata(_ context.Context, req re
 func (r *OrganizationalResourceGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.ObjectAttribute{
+				Computed: true,
+				AttributeTypes: map[string]attr.Type{
+					"type":       basetypes.StringType{},
+					"owner_id":   basetypes.StringType{},
+					"short_name": basetypes.StringType{},
+				},
+			},
 			"short_name": schema.StringAttribute{
 				Required: true,
 			},
@@ -134,6 +143,7 @@ func (r *OrganizationalResourceGroupResource) Create(ctx context.Context, req re
 	}
 
 	if createdResourceGroup != nil {
+		plan.Id = createdResourceGroup.Id
 		plan.DisplayName = createdResourceGroup.DisplayName
 		plan.Description = createdResourceGroup.Description
 		plan.Status = createdResourceGroup.Status
@@ -166,7 +176,7 @@ func (r *OrganizationalResourceGroupResource) Read(ctx context.Context, req reso
 
 	resourceGroupId := fractalCloud.ResourceGroupId{
 		Type:      "Organizational",
-		OwnerID:   state.OrganizationId.ValueString(),
+		OwnerId:   state.OrganizationId.ValueString(),
 		ShortName: state.ShortName.ValueString(),
 	}
 	resourceGroup, err := r.client.GetOrganizationalResourceGroup(resourceGroupId)
@@ -196,7 +206,18 @@ func (r *OrganizationalResourceGroupResource) Read(ctx context.Context, req reso
 		liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
 		resp.Diagnostics.Append(diags...)
 
+		idTypes := map[string]attr.Type{
+			"type":       types.StringType,
+			"owner_id":   types.StringType,
+			"short_name": types.StringType,
+		}
+
 		// Overwrite state
+		state.Id = types.ObjectValueMust(idTypes, map[string]attr.Value{
+			"type":       types.StringValue(resourceGroup.Id.Type),
+			"owner_id":   types.StringValue(resourceGroup.Id.OwnerId),
+			"short_name": types.StringValue(resourceGroup.Id.ShortName),
+		})
 		state.DisplayName = types.StringValue(resourceGroup.DisplayName)
 		state.Description = types.StringValue(resourceGroup.Description)
 		state.Status = types.StringValue(resourceGroup.Status)
@@ -238,6 +259,7 @@ func (r *OrganizationalResourceGroupResource) Update(ctx context.Context, req re
 	}
 
 	if updatedResourceGroup != nil {
+		plan.Id = updatedResourceGroup.Id
 		plan.DisplayName = updatedResourceGroup.DisplayName
 		plan.Description = updatedResourceGroup.Description
 		plan.Status = updatedResourceGroup.Status
@@ -272,7 +294,7 @@ func (r *OrganizationalResourceGroupResource) Delete(ctx context.Context, req re
 
 	resourceGroupId := fractalCloud.ResourceGroupId{
 		Type:      "Organizational",
-		OwnerID:   state.OrganizationId.ValueString(),
+		OwnerId:   state.OrganizationId.ValueString(),
 		ShortName: state.ShortName.ValueString(),
 	}
 
@@ -294,9 +316,9 @@ func UpsertOrganizationalResourceGroup(
 	r *OrganizationalResourceGroupResource) (*OrganizationalResourceGroupModel, error) {
 	// Generate API request body from plan
 	var resourceGroup = fractalCloud.OrganizationalResourceGroup{
-		ID: fractalCloud.ResourceGroupId{
+		Id: fractalCloud.ResourceGroupId{
 			Type:      "Organizational",
-			OwnerID:   plan.OrganizationId.ValueString(),
+			OwnerId:   plan.OrganizationId.ValueString(),
 			ShortName: plan.ShortName.ValueString(),
 		},
 		DisplayName: plan.DisplayName.ValueString(),
@@ -311,7 +333,7 @@ func UpsertOrganizationalResourceGroup(
 
 	plan.UpdatedAt = types.StringValue(time.Now().Format(time.RFC850))
 
-	updatedResourceGroup, err := r.client.GetOrganizationalResourceGroup(resourceGroup.ID)
+	updatedResourceGroup, err := r.client.GetOrganizationalResourceGroup(resourceGroup.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -335,9 +357,20 @@ func UpsertOrganizationalResourceGroup(
 	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.LiveSystemsIds)
 	diagnostics.Append(diags...)
 
+	idTypes := map[string]attr.Type{
+		"type":       types.StringType,
+		"owner_id":   types.StringType,
+		"short_name": types.StringType,
+	}
+
 	var result = &OrganizationalResourceGroupModel{
-		ShortName:      types.StringValue(updatedResourceGroup.ID.ShortName),
-		OrganizationId: types.StringValue(updatedResourceGroup.ID.ShortName),
+		Id: types.ObjectValueMust(idTypes, map[string]attr.Value{
+			"type":       types.StringValue(resourceGroup.Id.Type),
+			"owner_id":   types.StringValue(resourceGroup.Id.OwnerId),
+			"short_name": types.StringValue(resourceGroup.Id.ShortName),
+		}),
+		ShortName:      types.StringValue(updatedResourceGroup.Id.ShortName),
+		OrganizationId: types.StringValue(updatedResourceGroup.Id.ShortName),
 		DisplayName:    types.StringValue(updatedResourceGroup.DisplayName),
 		Description:    types.StringValue(updatedResourceGroup.Description),
 		Status:         types.StringValue(updatedResourceGroup.Status),

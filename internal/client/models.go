@@ -2,12 +2,12 @@ package fractalCloud
 
 type ResourceGroupId struct {
 	Type      string `json:"resourceGroupType"`
-	OwnerID   string `json:"ownerId"`
+	OwnerId   string `json:"ownerId"`
 	ShortName string `json:"shortName"`
 }
 
 type PersonalResourceGroup struct {
-	ID             ResourceGroupId `json:"id"`
+	Id             ResourceGroupId `json:"id"`
 	DisplayName    string          `json:"displayName"`
 	Status         string          `json:"status"`
 	Description    string          `json:"description"`
@@ -19,7 +19,7 @@ type PersonalResourceGroup struct {
 }
 
 type OrganizationalResourceGroup struct {
-	ID             ResourceGroupId `json:"id"`
+	Id             ResourceGroupId `json:"id"`
 	DisplayName    string          `json:"displayName"`
 	Description    string          `json:"description"`
 	Icon           string          `json:"icon"`
@@ -36,7 +36,7 @@ type OrganizationalResourceGroup struct {
 }
 
 type Organization struct {
-	ID                string   `json:"id"`
+	Id                string   `json:"id"`
 	DisplayName       string   `json:"name"`
 	Description       string   `json:"description"`
 	Icon              string   `json:"icon"`
@@ -52,4 +52,33 @@ type Organization struct {
 	CreatedBy         string   `json:"createdBy"`
 	UpdatedAt         string   `json:"updatedAt"`
 	UpdatedBy         string   `json:"updatedBy"`
+}
+
+type ComponentLink struct {
+	ComponentId string                 `json:"componentId"`
+	Settings    map[string]interface{} `json:"settings"`
+}
+
+type Component struct {
+	DisplayName       string                 `json:"displayName"`
+	Description       string                 `json:"description"`
+	Type              string                 `json:"type"`
+	Id                string                 `json:"id"`
+	Version           string                 `json:"version"`
+	IsLocked          bool                   `json:"locked"`
+	RecreateOnFailure bool                   `json:"recreateOnFailure"`
+	Parameters        map[string]interface{} `json:"parameters"`
+	Dependencies      []string               `json:"dependencies"`
+	Links             []ComponentLink        `json:"links"`
+	OutputFields      []string               `json:"outputFields"`
+}
+
+type Blueprint struct {
+	FractalId   string      `json:"fractalId"`
+	IsPrivate   bool        `json:"isPrivate"`
+	Status      string      `json:"status"`
+	ReasonCode  string      `json:"reasonCode"`
+	Description string      `json:"description"`
+	Components  []Component `json:"components"`
+	CreatedAt   string      `json:"created"`
 }

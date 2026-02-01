@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -61,6 +63,14 @@ func (r *PersonalResourceGroupResource) Metadata(_ context.Context, req resource
 func (r *PersonalResourceGroupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.ObjectAttribute{
+				Computed: true,
+				AttributeTypes: map[string]attr.Type{
+					"type":       basetypes.StringType{},
+					"owner_id":   basetypes.StringType{},
+					"short_name": basetypes.StringType{},
+				},
+			},
 			"short_name": schema.StringAttribute{
 				Required: true,
 			},
@@ -96,6 +106,7 @@ func (r *PersonalResourceGroupResource) Schema(_ context.Context, _ resource.Sch
 
 // Create creates the resource and sets the initial Terraform state.
 func (r *PersonalResourceGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	tflog.Info(ctx, "Creating Personal Resource Group")
 	// Retrieve values from plan
 	var plan PersonalResourceGroupModel
 	diags := req.Plan.Get(ctx, &plan)
@@ -113,6 +124,7 @@ func (r *PersonalResourceGroupResource) Create(ctx context.Context, req resource
 	}
 
 	if createdResourceGroup != nil {
+		plan.Id = createdResourceGroup.Id
 		plan.CreatedAt = createdResourceGroup.CreatedAt
 		plan.Description = createdResourceGroup.Description
 		plan.UpdatedAt = createdResourceGroup.UpdatedAt
@@ -145,7 +157,7 @@ func (r *PersonalResourceGroupResource) Read(ctx context.Context, req resource.R
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Cloud Resource Group",
-			"Could not read Fractal Cloud Resource Group ID "+state.ShortName.ValueString()+": "+err.Error(),
+			"Could not read Fractal Cloud Resource Group Id "+state.ShortName.ValueString()+": "+err.Error(),
 		)
 		return
 	}
@@ -158,6 +170,17 @@ func (r *PersonalResourceGroupResource) Read(ctx context.Context, req resource.R
 		liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
 		resp.Diagnostics.Append(diags...)
 
+		idTypes := map[string]attr.Type{
+			"type":       types.StringType,
+			"owner_id":   types.StringType,
+			"short_name": types.StringType,
+		}
+
+		state.Id = types.ObjectValueMust(idTypes, map[string]attr.Value{
+			"type":       types.StringValue(resourceGroup.Id.Type),
+			"owner_id":   types.StringValue(resourceGroup.Id.OwnerId),
+			"short_name": types.StringValue(resourceGroup.Id.ShortName),
+		})
 		state.DisplayName = types.StringValue(resourceGroup.DisplayName)
 		state.Description = types.StringValue(resourceGroup.Description)
 		state.Status = types.StringValue(resourceGroup.Status)
@@ -194,6 +217,7 @@ func (r *PersonalResourceGroupResource) Update(ctx context.Context, req resource
 	}
 
 	if updatedResourceGroup != nil {
+		plan.Id = updatedResourceGroup.Id
 		plan.CreatedAt = updatedResourceGroup.CreatedAt
 		plan.Description = updatedResourceGroup.Description
 		plan.UpdatedAt = updatedResourceGroup.UpdatedAt
@@ -243,7 +267,7 @@ func UpsertResourceGroup(
 	r *PersonalResourceGroupResource) (*PersonalResourceGroupModel, error) {
 	// Generate API request body from plan
 	var resourceGroup = fractalCloud.PersonalResourceGroup{
-		ID: fractalCloud.ResourceGroupId{
+		Id: fractalCloud.ResourceGroupId{
 			Type:      "Personal",
 			ShortName: plan.ShortName.ValueString(),
 		},
@@ -259,7 +283,7 @@ func UpsertResourceGroup(
 
 	plan.UpdatedAt = types.StringValue(time.Now().Format(time.RFC850))
 
-	updatedResourceGroup, err := r.client.GetPersonalResourceGroup(resourceGroup.ID)
+	updatedResourceGroup, err := r.client.GetPersonalResourceGroup(resourceGroup.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +298,18 @@ func UpsertResourceGroup(
 	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, updatedResourceGroup.LiveSystemsIds)
 	diagnostics.Append(diags...)
 
+	idTypes := map[string]attr.Type{
+		"type":       types.StringType,
+		"owner_id":   types.StringType,
+		"short_name": types.StringType,
+	}
+
 	var result = &PersonalResourceGroupModel{
+		Id: types.ObjectValueMust(idTypes, map[string]attr.Value{
+			"type":       types.StringValue(resourceGroup.Id.Type),
+			"owner_id":   types.StringValue(resourceGroup.Id.OwnerId),
+			"short_name": types.StringValue(resourceGroup.Id.ShortName),
+		}),
 		ShortName:      plan.ShortName,
 		DisplayName:    types.StringValue(updatedResourceGroup.DisplayName),
 		Description:    types.StringValue(updatedResourceGroup.Description),

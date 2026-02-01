@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -57,6 +58,14 @@ func (d *PersonalResourceGroupsDataSource) Metadata(_ context.Context, req datas
 func (d *PersonalResourceGroupsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.ObjectAttribute{
+				Computed: true,
+				AttributeTypes: map[string]attr.Type{
+					"type":       basetypes.StringType{},
+					"owner_id":   basetypes.StringType{},
+					"short_name": basetypes.StringType{},
+				},
+			},
 			"short_name": schema.StringAttribute{
 				Required: true,
 			},
@@ -92,6 +101,7 @@ func (d *PersonalResourceGroupsDataSource) Schema(_ context.Context, _ datasourc
 
 // PersonalResourceGroupModel maps resource group schema data.
 type PersonalResourceGroupModel struct {
+	Id             types.Object `tfsdk:"id"`
 	ShortName      types.String `tfsdk:"short_name"`
 	DisplayName    types.String `tfsdk:"display_name"`
 	Description    types.String `tfsdk:"description"`
@@ -141,7 +151,7 @@ func (d *PersonalResourceGroupsDataSource) Read(ctx context.Context, req datasou
 	if resourceGroup == nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Cloud Resource Group",
-			"Could not find Fractal Cloud Resource Group ID "+config.ShortName.ValueString())
+			"Could not find Fractal Cloud Resource Group Id "+config.ShortName.ValueString())
 		return
 	}
 
@@ -151,10 +161,20 @@ func (d *PersonalResourceGroupsDataSource) Read(ctx context.Context, req datasou
 	liveSystemsIds, diags := types.ListValueFrom(ctx, types.StringType, resourceGroup.LiveSystemsIds)
 	resp.Diagnostics.Append(diags...)
 
+	idTypes := map[string]attr.Type{
+		"type":       types.StringType,
+		"owner_id":   types.StringType,
+		"short_name": types.StringType,
+	}
+
 	// Build state
 	state := PersonalResourceGroupModel{
-		// For data sources, the `id` in state should be stable. Often it's the same as input.
-		ShortName:      types.StringValue(resourceGroup.ID.ShortName),
+		Id: types.ObjectValueMust(idTypes, map[string]attr.Value{
+			"type":       types.StringValue(resourceGroup.Id.Type),
+			"owner_id":   types.StringValue(resourceGroup.Id.OwnerId),
+			"short_name": types.StringValue(resourceGroup.Id.ShortName),
+		}),
+		ShortName:      types.StringValue(resourceGroup.Id.ShortName),
 		DisplayName:    types.StringValue(resourceGroup.DisplayName),
 		Description:    types.StringValue(resourceGroup.Description),
 		Icon:           types.StringValue(resourceGroup.Icon),

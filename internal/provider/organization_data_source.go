@@ -117,7 +117,7 @@ func (d *OrganizationDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 
 // OrganizationModel maps resource group schema data.
 type OrganizationModel struct {
-	ID             types.String `tfsdk:"id"`
+	Id             types.String `tfsdk:"id"`
 	DisplayName    types.String `tfsdk:"display_name"`
 	Description    types.String `tfsdk:"description"`
 	Icon           types.String `tfsdk:"icon"`
@@ -128,7 +128,7 @@ type OrganizationModel struct {
 	Teams          types.List   `tfsdk:"teams"`
 	ResourceGroups types.List   `tfsdk:"resource_groups"`
 	Status         types.String `tfsdk:"status"`
-	SubscriptionID types.String `tfsdk:"subscription_id"`
+	SubscriptionId types.String `tfsdk:"subscription_id"`
 	CreatedAt      types.String `tfsdk:"created_at"`
 	CreatedBy      types.String `tfsdk:"created_by"`
 	UpdatedAt      types.String `tfsdk:"updated_at"`
@@ -146,10 +146,10 @@ func (d *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Validate required input isn't unknown/null
-	if config.ID.IsUnknown() || config.ID.IsNull() {
+	if config.Id.IsUnknown() || config.Id.IsNull() {
 		resp.Diagnostics.AddError(
 			"Unknown required value",
-			fmt.Sprintf("ID is required, but its value is unknown, null or empty."),
+			fmt.Sprintf("Id is required, but its value is unknown, null or empty."),
 		)
 		return
 	}
@@ -158,18 +158,18 @@ func (d *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
-	organization, err := d.client.GetOrganization(config.ID.ValueString())
+	organization, err := d.client.GetOrganization(config.Id.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Organization",
-			"Could not read Fractal Organization with ID "+config.ID.ValueString()+": "+err.Error())
+			"Could not read Fractal Organization with Id "+config.Id.ValueString()+": "+err.Error())
 		return
 	}
 
 	if organization == nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Fractal Organization",
-			"Could not find Fractal Organization with ID "+config.ID.ValueString())
+			"Could not find Fractal Organization with Id "+config.Id.ValueString())
 		return
 	}
 
@@ -194,7 +194,7 @@ func (d *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	// Build state
 	state := OrganizationModel{
 		// For data sources, the `id` in state should be stable. Often it's the same as input.
-		ID:             types.StringValue(organization.ID),
+		Id:             types.StringValue(organization.Id),
 		DisplayName:    types.StringValue(organization.DisplayName),
 		Description:    types.StringValue(organization.Description),
 		Icon:           types.StringValue(organization.Icon),
@@ -205,7 +205,7 @@ func (d *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		Teams:          teams,
 		ResourceGroups: resourceGroups,
 		Status:         types.StringValue(organization.Status),
-		SubscriptionID: types.StringValue(organization.SubscriptionId),
+		SubscriptionId: types.StringValue(organization.SubscriptionId),
 		CreatedAt:      types.StringValue(organization.CreatedAt),
 		CreatedBy:      types.StringValue(organization.CreatedBy),
 		UpdatedAt:      types.StringValue(organization.UpdatedAt),
