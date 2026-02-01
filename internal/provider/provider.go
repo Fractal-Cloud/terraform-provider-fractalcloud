@@ -151,6 +151,7 @@ func (p *fractalCloudProvider) DataSources(_ context.Context) []func() datasourc
 		NewPersonalResourceGroupDataSource,
 		NewOrganizationalResourceGroupDataSource,
 		NewOrganizationDataSource,
+		NewFractalDataSource,
 	}
 }
 
@@ -161,6 +162,5 @@ func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Re
 		NewOrganizationalResourceGroup,
 		NewManagementEnvironment,
 		NewOperationalEnvironment,
-		NewFractal,
 	}
 }

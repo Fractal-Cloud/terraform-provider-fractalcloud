@@ -55,22 +55,22 @@ type Organization struct {
 }
 
 type ComponentLink struct {
-	ComponentId string                 `json:"componentId"`
-	Settings    map[string]interface{} `json:"settings"`
+	ComponentId string            `json:"componentId"`
+	Settings    map[string]string `json:"settings"`
 }
 
 type Component struct {
-	DisplayName       string                 `json:"displayName"`
-	Description       string                 `json:"description"`
-	Type              string                 `json:"type"`
-	Id                string                 `json:"id"`
-	Version           string                 `json:"version"`
-	IsLocked          bool                   `json:"locked"`
-	RecreateOnFailure bool                   `json:"recreateOnFailure"`
-	Parameters        map[string]interface{} `json:"parameters"`
-	Dependencies      []string               `json:"dependencies"`
-	Links             []ComponentLink        `json:"links"`
-	OutputFields      []string               `json:"outputFields"`
+	Id                string            `json:"id"`
+	Type              string            `json:"type"`
+	DisplayName       string            `json:"displayName"`
+	Description       string            `json:"description"`
+	Version           string            `json:"version"`
+	IsLocked          bool              `json:"locked"`
+	RecreateOnFailure bool              `json:"recreateOnFailure"`
+	Parameters        map[string]string `json:"parameters"`
+	DependenciesIds   []string          `json:"dependencies"`
+	Links             []ComponentLink   `json:"links"`
+	OutputFields      []string          `json:"outputFields"`
 }
 
 type Blueprint struct {
