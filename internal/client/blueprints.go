@@ -60,7 +60,7 @@ func (c *Client) GetBlueprint(id FractalId) (*Blueprint, error) {
 		for j, link := range component.Links {
 			links[j] = ComponentLink{
 				ComponentId: link.ComponentId,
-				Settings:    MapAnyToMapStringJSON(c.Logger, link.Settings),
+				Settings:    mapAnyToMapStringJSON(c.Logger, link.Settings),
 			}
 		}
 		normalizedComponents[i] = Component{
@@ -71,7 +71,7 @@ func (c *Client) GetBlueprint(id FractalId) (*Blueprint, error) {
 			Version:           component.Version,
 			IsLocked:          component.IsLocked,
 			RecreateOnFailure: component.RecreateOnFailure,
-			Parameters:        MapAnyToMapStringJSON(c.Logger, component.Parameters),
+			Parameters:        mapAnyToMapStringJSON(c.Logger, component.Parameters),
 			DependenciesIds:   component.DependenciesIds,
 			Links:             links,
 			OutputFields:      component.OutputFields,
@@ -118,21 +118,6 @@ type BlueprintInternal struct {
 	CreatedAt   string              `json:"created"`
 }
 
-func MapAnyToMapStringJSON(logger *ClientLogger, in map[string]interface{}) map[string]string {
-	out := make(map[string]string, len(in))
-
-	for k, v := range in {
-		b, err := json.Marshal(v)
-		if err == nil {
-			out[k] = string(b)
-		} else {
-			logger.Warning(fmt.Sprintf("marshal key %q: %w", k, err))
-		}
-	}
-
-	return out
-}
-
 type CreateBlueprintCommandRequestBody struct {
 	Description string      `json:"description"`
 	IsPrivate   bool        `json:"isPrivate"`
@@ -175,7 +160,11 @@ type UpdateBlueprintCommandRequest struct {
 	Components      []Component     `json:"components"`
 }
 
-func (c *Client) UpdateBlueprint(id FractalId, newId FractalId, description string, isPrivate bool, components []Component) error {
+func (c *Client) UpdateBlueprint(id FractalId, description string, isPrivate bool, components []Component) error {
+	return c.UpdateBlueprintWithNewId(id, id, description, isPrivate, components)
+}
+
+func (c *Client) UpdateBlueprintWithNewId(id FractalId, newId FractalId, description string, isPrivate bool, components []Component) error {
 	resourceGroupId := id.ResourceGroupId
 
 	requestBody := UpdateBlueprintCommandRequest{
@@ -223,4 +212,19 @@ func (c *Client) DeleteBlueprint(id FractalId) error {
 	}
 
 	return nil
+}
+
+func mapAnyToMapStringJSON(logger *ClientLogger, in map[string]interface{}) map[string]string {
+	out := make(map[string]string, len(in))
+
+	for k, v := range in {
+		b, err := json.Marshal(v)
+		if err == nil {
+			out[k] = string(b)
+		} else {
+			logger.Warning(fmt.Sprintf("marshal key %q: %w", k, err))
+		}
+	}
+
+	return out
 }

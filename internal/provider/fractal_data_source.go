@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -164,6 +165,20 @@ func (d *FractalsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
+	state, done := GetFractalModel(ctx, config, d.client, resp.Diagnostics)
+	if done {
+		return
+	}
+
+	// Write state
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+func GetFractalModel(
+	ctx context.Context,
+	config BlueprintModel,
+	client *fractalCloud.Client,
+	diagnostics diag.Diagnostics) (BlueprintModel, bool) {
 	var fractalId = fractalCloud.FractalId{
 		ResourceGroupId: fractalCloud.ResourceGroupId{
 			Type:      config.ResourceGroupId.Type.ValueString(),
@@ -174,33 +189,33 @@ func (d *FractalsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		Version: config.Version.ValueString(),
 	}
 
-	blueprint, err := d.client.GetBlueprint(fractalId)
+	blueprint, err := client.GetBlueprint(fractalId)
 	if err != nil {
-		resp.Diagnostics.AddError(
+		diagnostics.AddError(
 			"Error Reading Fractal Cloud Blueprint",
 			"Could not read Fractal with Id "+fractalId.ToString()+": "+err.Error())
-		return
+		return BlueprintModel{}, true
 	}
 
 	if blueprint == nil {
-		resp.Diagnostics.AddError(
+		diagnostics.AddError(
 			"Error Reading Fractal Cloud Blueprint",
 			"Could not find Fractal Cloud Blueprint with Id "+fractalId.ToString())
-		return
+		return BlueprintModel{}, true
 	}
 
 	components := make([]ComponentModel, len(blueprint.Components))
 	for i, component := range blueprint.Components {
 		parameters, diags := types.MapValueFrom(ctx, types.StringType, component.Parameters)
-		resp.Diagnostics.Append(diags...)
+		diagnostics.Append(diags...)
 
 		dependenciesIds, diags := types.ListValueFrom(ctx, types.StringType, component.DependenciesIds)
-		resp.Diagnostics.Append(diags...)
+		diagnostics.Append(diags...)
 
 		links := make([]LinkModel, len(component.Links))
 		for j, link := range component.Links {
 			settings, diags := types.MapValueFrom(ctx, types.StringType, link.Settings)
-			resp.Diagnostics.Append(diags...)
+			diagnostics.Append(diags...)
 
 			links[j] = LinkModel{
 				ComponentId: types.StringValue(link.ComponentId),
@@ -216,10 +231,10 @@ func (d *FractalsDataSource) Read(ctx context.Context, req datasource.ReadReques
 				},
 			},
 		}, links)
-		resp.Diagnostics.Append(diags...)
+		diagnostics.Append(diags...)
 
 		outputFields, diags := types.ListValueFrom(ctx, types.StringType, component.OutputFields)
-		resp.Diagnostics.Append(diags...)
+		diagnostics.Append(diags...)
 
 		components[i] = ComponentModel{
 			Id:                types.StringValue(component.Id),
@@ -266,7 +281,7 @@ func (d *FractalsDataSource) Read(ctx context.Context, req datasource.ReadReques
 			},
 		},
 	}, components)
-	resp.Diagnostics.Append(diags...)
+	diagnostics.Append(diags...)
 
 	// Build state
 	state := BlueprintModel{
@@ -278,7 +293,5 @@ func (d *FractalsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		Components:      componentsToMap,
 		CreatedAt:       types.StringValue(blueprint.CreatedAt),
 	}
-
-	// Write state
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	return state, false
 }
