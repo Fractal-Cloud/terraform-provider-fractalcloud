@@ -55,22 +55,22 @@ type Organization struct {
 }
 
 type ComponentLink struct {
-	ComponentId string            `json:"componentId"`
-	Settings    map[string]string `json:"settings"`
+	ComponentId string            `json:"componentId" tfsdk:"component_id"`
+	Settings    map[string]string `json:"settings" tfsdk:"settings"`
 }
 
 type Component struct {
-	Id                string            `json:"id"`
-	Type              string            `json:"type"`
-	DisplayName       string            `json:"displayName"`
-	Description       string            `json:"description"`
-	Version           string            `json:"version"`
-	IsLocked          bool              `json:"locked"`
-	RecreateOnFailure bool              `json:"recreateOnFailure"`
-	Parameters        map[string]string `json:"parameters"`
-	DependenciesIds   []string          `json:"dependencies"`
-	Links             []ComponentLink   `json:"links"`
-	OutputFields      []string          `json:"outputFields"`
+	Id                string            `json:"id" tfsdk:"id"`
+	Type              string            `json:"type" tfsdk:"type"`
+	DisplayName       *string           `json:"displayName,omitempty" tfsdk:"display_name"`
+	Description       *string           `json:"description,omitempty" tfsdk:"description"`
+	Version           *string           `json:"version,omitempty" tfsdk:"version"`
+	IsLocked          *bool             `json:"locked,omitempty" tfsdk:"is_locked"`
+	RecreateOnFailure *bool             `json:"recreateOnFailure,omitempty" tfsdk:"recreate_on_failure"`
+	Parameters        map[string]string `json:"parameters,omitempty" tfsdk:"parameters"`
+	DependenciesIds   []string          `json:"dependencies,omitempty" tfsdk:"dependencies_ids"`
+	Links             []ComponentLink   `json:"links,omitempty" tfsdk:"links"`
+	OutputFields      []string          `json:"outputFields,omitempty" tfsdk:"output_fields"`
 }
 
 type Blueprint struct {

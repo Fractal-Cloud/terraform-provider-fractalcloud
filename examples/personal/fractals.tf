@@ -1,11 +1,11 @@
 data "fractalcloud_fractal" "existing_fractal" {
-  resource_group_id = data.fractalcloud_personal_resource_group.existing_resource_group.id
+  bounded_context_id = data.fractalcloud_personal_bounded_context.existing_bounded_context.id
   name = "existing-fractal"
   version = "1.0"
 }
 
 resource "fractalcloud_fractal" "new_fractal" {
-  resource_group_id = data.fractalcloud_personal_resource_group.existing_resource_group.id
+  bounded_context_id = data.fractalcloud_personal_bounded_context.existing_bounded_context.id
   name = "new-fractal"
   version = "1.0"
   description = "Fractal Created with Terraform"

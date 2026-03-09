@@ -1,17 +1,14 @@
-resource "fractalcloud_resource_group" "production_audi" {
-  type = "Personal"
-  owner_id = "xxx"
+resource "fractalcloud_personal_bounded_context" "production_audi" {
+  short_name   = "production-audi"
   display_name = "Audi Production"
 }
 
-resource "fractalcloud_resource_group" "production_toyota" {
-  type = "Personal"
-  owner_id = "xxx"
+resource "fractalcloud_personal_bounded_context" "production_toyota" {
+  short_name   = "production-toyota"
   display_name = "Toyota Production"
 }
 
-resource "fractalcloud_resource_group" "production" {
-  type = "Personal"
-  owner_id = "xxx"
+resource "fractalcloud_personal_bounded_context" "production" {
+  short_name   = "production"
   display_name = "Production"
 }

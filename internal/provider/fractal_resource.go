@@ -2,16 +2,16 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strconv"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -34,20 +34,16 @@ type FractalResource struct {
 
 // Configure adds the provider configured client to the resource.
 func (r *FractalResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Add a nil check when handling ProviderData because Terraform
-	// sets that data after it calls the ConfigureProvider RPC.
 	if req.ProviderData == nil {
 		return
 	}
 
 	client, ok := req.ProviderData.(*fractalCloud.Client)
-
 	if !ok {
 		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *fractal_cloud.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *fractalCloud.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
-
 		return
 	}
 
@@ -63,7 +59,7 @@ func (r *FractalResource) Metadata(_ context.Context, req resource.MetadataReque
 func (r *FractalResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"resource_group_id": schema.ObjectAttribute{
+			"bounded_context_id": schema.ObjectAttribute{
 				Required: true,
 				AttributeTypes: map[string]attr.Type{
 					"type":       basetypes.StringType{},
@@ -106,10 +102,10 @@ func (r *FractalResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						"version": schema.StringAttribute{
 							Optional: true,
 						},
-						"is_locked": schema.StringAttribute{
+						"is_locked": schema.BoolAttribute{
 							Optional: true,
 						},
-						"recreate_on_failure": schema.StringAttribute{
+						"recreate_on_failure": schema.BoolAttribute{
 							Optional: true,
 						},
 						"parameters": schema.MapAttribute{
@@ -148,159 +144,227 @@ func (r *FractalResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
-// Create creates the resource and sets the initial Terraform state.
-func (r *FractalResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	tflog.Info(ctx, "Creating Personal Resource Group")
-	// Retrieve values from plan
-	var plan BlueprintModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	createdFractal, err := createOrUpdateFractal(ctx, diags, plan, r.client, r.client.CreateBlueprint)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error creating or updating Fractal",
-			"Could not create Fractal, unexpected error: "+err.Error(),
-		)
-	}
-
-	if createdFractal != nil {
-		plan.ResourceGroupId = createdFractal.ResourceGroupId
-		plan.Name = createdFractal.Name
-		plan.Version = createdFractal.Version
-		plan.Description = createdFractal.Description
-		plan.IsPrivate = createdFractal.IsPrivate
-		plan.Components = createdFractal.Components
-		plan.CreatedAt = createdFractal.CreatedAt
-	}
-
-	// Set state to fully populated data
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-}
-
-// Read refreshes the Terraform state with the latest data.
-func (r *FractalResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	// Get current state
-	var state BlueprintModel
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	state, done := GetFractalModel(ctx, state, r.client, resp.Diagnostics)
-	if done {
-		return
-	}
-
-	// Set refreshed state
-	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-}
-
-// Update updates the resource and sets the updated Terraform state on success.
-func (r *FractalResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	tflog.Info(ctx, "Creating Personal Resource Group")
-	// Retrieve values from plan
-	var plan BlueprintModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	createdFractal, err := createOrUpdateFractal(ctx, diags, plan, r.client, r.client.UpdateBlueprint)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error creating or updating Fractal",
-			"Could not create Fractal, unexpected error: "+err.Error(),
-		)
-	}
-
-	if createdFractal != nil {
-		plan.ResourceGroupId = createdFractal.ResourceGroupId
-		plan.Name = createdFractal.Name
-		plan.Version = createdFractal.Version
-		plan.Description = createdFractal.Description
-		plan.IsPrivate = createdFractal.IsPrivate
-		plan.Components = createdFractal.Components
-		plan.CreatedAt = createdFractal.CreatedAt
-	}
-
-	// Set state to fully populated data
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-}
-
-// Delete deletes the resource and removes the Terraform state on success.
-func (r *FractalResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	// Retrieve values from state
-	var state PersonalResourceGroupModel
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resourceGroupId := fractalCloud.ResourceGroupId{
-		Type:      "Personal",
-		ShortName: state.ShortName.ValueString(),
-	}
-
-	// Delete existing order
-	err := r.client.DeletePersonalResourceGroup(resourceGroupId)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting Fractal Cloud Resource Group",
-			"Could not delete Resource Group, unexpected error: "+err.Error(),
-		)
-		return
-	}
-}
-
-func createOrUpdateFractal(
-	ctx context.Context,
-	diagnostics diag.Diagnostics,
-	plan BlueprintModel,
-	client *fractalCloud.Client,
-	createOrUpdate func(fractalCloud.FractalId, string, bool, []fractalCloud.Component) error) (*BlueprintModel, error) {
-
-	// Generate API request body from plan
-	var fractalId = fractalCloud.FractalId{
+// fractalIdFromModel constructs a FractalId from the BlueprintModel.
+func fractalIdFromModel(plan BlueprintModel) fractalCloud.FractalId {
+	return fractalCloud.FractalId{
 		ResourceGroupId: fractalCloud.ResourceGroupId{
-			Type:      plan.ResourceGroupId.Type.ValueString(),
-			OwnerId:   plan.ResourceGroupId.OwnerId.ValueString(),
-			ShortName: plan.ResourceGroupId.ShortName.ValueString(),
+			Type:      plan.BoundedContextId.Type.ValueString(),
+			OwnerId:   plan.BoundedContextId.OwnerId.ValueString(),
+			ShortName: plan.BoundedContextId.ShortName.ValueString(),
 		},
 		Name:    plan.Name.ValueString(),
 		Version: plan.Version.ValueString(),
 	}
+}
 
-	var components []fractalCloud.Component
-	diags := plan.Components.ElementsAs(ctx, &components, false)
-	diagnostics.Append(diags...)
+// fractalLogFields returns structured log fields for a fractal.
+func fractalLogFields(plan BlueprintModel) map[string]any {
+	return map[string]any{
+		"fractal_name":    plan.Name.ValueString(),
+		"fractal_version": plan.Version.ValueString(),
+		"bounded_context": plan.BoundedContextId.ShortName.ValueString(),
+	}
+}
 
-	// Create or update Blueprint
-	err := createOrUpdate(
-		fractalId,
-		plan.Description.ValueString(),
-		plan.IsPrivate.ValueBool(),
-		components)
+// Create creates the resource and sets the initial Terraform state.
+func (r *FractalResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan BlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	fractalId := fractalIdFromModel(plan)
+	tflog.Info(ctx, "creating fractal", fractalLogFields(plan))
+
+	components, err := r.extractComponents(ctx, plan, &resp.Diagnostics)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	result, done := GetFractalModel(ctx, plan, client, diagnostics)
-	if done {
-		return nil, errors.New("get Fractal Model failed")
+	tflog.Debug(ctx, "fractal create request", map[string]any{
+		"fractal_id":      fractalId.ToString(),
+		"component_count": len(components),
+	})
+
+	// Check if the fractal already exists — if so, update instead of create
+	existing, err := r.client.GetBlueprint(ctx, fractalId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Checking Fractal Existence",
+			fmt.Sprintf("Could not check if fractal %q already exists: %s", fractalId.ToString(), err),
+		)
+		return
 	}
 
-	return &result, nil
+	if existing != nil {
+		tflog.Info(ctx, "fractal already exists, updating instead", fractalLogFields(plan))
+		err = r.client.UpdateBlueprint(ctx, fractalId, plan.Description.ValueString(), plan.IsPrivate.ValueBool(), components)
+	} else {
+		err = r.client.CreateBlueprint(ctx, fractalId, plan.Description.ValueString(), plan.IsPrivate.ValueBool(), components)
+	}
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Creating Fractal",
+			fmt.Sprintf("Could not create fractal %q: %s", fractalId.ToString(), err),
+		)
+		return
+	}
+
+	// Only fetch the server-computed field (created_at); keep plan as source of truth
+	r.readComputedFields(ctx, &plan, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	tflog.Info(ctx, "created fractal", fractalLogFields(plan))
+}
+
+// Read refreshes the Terraform state with the latest data.
+func (r *FractalResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state BlueprintModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	fractalId := fractalIdFromModel(state)
+	tflog.Debug(ctx, "reading fractal", fractalLogFields(state))
+
+	blueprint, err := r.client.GetBlueprint(ctx, fractalId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Fractal",
+			fmt.Sprintf("Could not read fractal %q: %s", fractalId.ToString(), err),
+		)
+		return
+	}
+
+	if blueprint == nil {
+		tflog.Warn(ctx, "fractal not found, removing from state", fractalLogFields(state))
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	mapBlueprintToState(ctx, blueprint, &state, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+// Update updates the resource and sets the updated Terraform state on success.
+func (r *FractalResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan BlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	fractalId := fractalIdFromModel(plan)
+	tflog.Info(ctx, "updating fractal", fractalLogFields(plan))
+
+	components, err := r.extractComponents(ctx, plan, &resp.Diagnostics)
+	if err != nil {
+		return
+	}
+
+	tflog.Debug(ctx, "fractal update request", map[string]any{
+		"fractal_id":      fractalId.ToString(),
+		"component_count": len(components),
+	})
+
+	if err := r.client.UpdateBlueprint(ctx, fractalId, plan.Description.ValueString(), plan.IsPrivate.ValueBool(), components); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Updating Fractal",
+			fmt.Sprintf("Could not update fractal %q: %s", fractalId.ToString(), err),
+		)
+		return
+	}
+
+	r.readComputedFields(ctx, &plan, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, plan)...)
+	tflog.Info(ctx, "updated fractal", fractalLogFields(plan))
+}
+
+// Delete deletes the resource and removes the Terraform state on success.
+func (r *FractalResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state BlueprintModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	fractalId := fractalIdFromModel(state)
+	tflog.Info(ctx, "deleting fractal", fractalLogFields(state))
+
+	if err := r.client.DeleteBlueprint(ctx, fractalId); err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting Fractal",
+			fmt.Sprintf("Could not delete fractal %q: %s", fractalId.ToString(), err),
+		)
+		return
+	}
+
+	tflog.Info(ctx, "deleted fractal", fractalLogFields(state))
+}
+
+// extractComponents parses the components from the plan into client model objects.
+// Returns nil and adds diagnostics on error.
+func (r *FractalResource) extractComponents(
+	ctx context.Context,
+	plan BlueprintModel,
+	diags *Diagnostics,
+) ([]fractalCloud.Component, error) {
+	components := make([]fractalCloud.Component, 0, len(plan.Components.Elements()))
+	d := plan.Components.ElementsAs(ctx, &components, false)
+	diags.Append(d...)
+	if d.HasError() {
+		logDiags(ctx, "failed to parse fractal components", d)
+		diags.AddError(
+			"Invalid Fractal Components",
+			"Could not parse the components configuration. Check that all component attributes have the correct types.",
+		)
+		return nil, fmt.Errorf("invalid components")
+	}
+
+	tflog.Debug(ctx, "parsed fractal components", map[string]any{
+		"count": strconv.Itoa(len(components)),
+	})
+	return components, nil
+}
+
+// readComputedFields fetches only server-computed fields (created_at) from the API,
+// preserving all plan values as the source of truth for non-computed attributes.
+func (r *FractalResource) readComputedFields(
+	ctx context.Context,
+	model *BlueprintModel,
+	diags *Diagnostics,
+) {
+	fractalId := fractalIdFromModel(*model)
+
+	blueprint, err := r.client.GetBlueprint(ctx, fractalId)
+	if err != nil {
+		diags.AddError(
+			"Error Reading Fractal After Mutation",
+			fmt.Sprintf("Could not read fractal %q after create/update: %s", fractalId.ToString(), err),
+		)
+		return
+	}
+
+	if blueprint == nil {
+		diags.AddError(
+			"Fractal Not Found After Mutation",
+			fmt.Sprintf("Fractal %q was not found immediately after create/update. This is unexpected.", fractalId.ToString()),
+		)
+		return
+	}
+
+	model.CreatedAt = types.StringValue(blueprint.CreatedAt)
 }

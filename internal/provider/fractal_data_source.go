@@ -8,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -30,9 +30,7 @@ type FractalsDataSource struct {
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *FractalsDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Add a nil check when handling ProviderData because Terraform
-	// sets that data after it calls the ConfigureProvider RPC.
+func (d *FractalsDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -43,7 +41,6 @@ func (d *FractalsDataSource) Configure(ctx context.Context, req datasource.Confi
 			"Unexpected Data Source Configure Type",
 			fmt.Sprintf("Expected *fractalCloud.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
-
 		return
 	}
 
@@ -59,7 +56,7 @@ func (d *FractalsDataSource) Metadata(_ context.Context, req datasource.Metadata
 func (d *FractalsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"resource_group_id": schema.ObjectAttribute{
+			"bounded_context_id": schema.ObjectAttribute{
 				Required: true,
 				AttributeTypes: map[string]attr.Type{
 					"type":       basetypes.StringType{},
@@ -138,84 +135,86 @@ type ComponentModel struct {
 	OutputFields      types.List   `tfsdk:"output_fields"`
 }
 
-type ResourceGroupIdModel struct {
+type BoundedContextIdModel struct {
 	Type      types.String `tfsdk:"type"`
 	OwnerId   types.String `tfsdk:"owner_id"`
 	ShortName types.String `tfsdk:"short_name"`
 }
 
-// BlueprintModel maps resource group schema data.
+// BlueprintModel maps fractal schema data.
 type BlueprintModel struct {
-	ResourceGroupId ResourceGroupIdModel `tfsdk:"resource_group_id"`
-	Name            types.String         `tfsdk:"name"`
-	Version         types.String         `tfsdk:"version"`
-	Description     types.String         `tfsdk:"description"`
-	IsPrivate       types.Bool           `tfsdk:"is_private"`
-	Components      types.List           `tfsdk:"components"`
-	CreatedAt       types.String         `tfsdk:"created_at"`
+	BoundedContextId BoundedContextIdModel `tfsdk:"bounded_context_id"`
+	Name             types.String          `tfsdk:"name"`
+	Version          types.String          `tfsdk:"version"`
+	Description      types.String          `tfsdk:"description"`
+	IsPrivate        types.Bool            `tfsdk:"is_private"`
+	Components       types.List            `tfsdk:"components"`
+	CreatedAt        types.String          `tfsdk:"created_at"`
 }
 
 // Read refreshes the Terraform state with the latest data.
 func (d *FractalsDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var config BlueprintModel
-
-	// Read user configuration
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	state, done := GetFractalModel(ctx, config, d.client, resp.Diagnostics)
-	if done {
+	fractalId := fractalIdFromModel(config)
+	tflog.Debug(ctx, "reading fractal data source", map[string]any{
+		"fractal_id": fractalId.ToString(),
+	})
+
+	blueprint, err := d.client.GetBlueprint(ctx, fractalId)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading Fractal",
+			fmt.Sprintf("Could not read fractal %q: %s", fractalId.ToString(), err),
+		)
 		return
 	}
 
-	// Write state
+	if blueprint == nil {
+		resp.Diagnostics.AddError(
+			"Fractal Not Found",
+			fmt.Sprintf("No fractal found with id %q.", fractalId.ToString()),
+		)
+		return
+	}
+
+	state := BlueprintModel{
+		BoundedContextId: config.BoundedContextId,
+		Name:             config.Name,
+		Version:          config.Version,
+	}
+
+	mapBlueprintToState(ctx, blueprint, &state, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func GetFractalModel(
+// mapBlueprintToState maps an API Blueprint response into the Terraform BlueprintModel.
+func mapBlueprintToState(
 	ctx context.Context,
-	config BlueprintModel,
-	client *fractalCloud.Client,
-	diagnostics diag.Diagnostics) (BlueprintModel, bool) {
-	var fractalId = fractalCloud.FractalId{
-		ResourceGroupId: fractalCloud.ResourceGroupId{
-			Type:      config.ResourceGroupId.Type.ValueString(),
-			OwnerId:   config.ResourceGroupId.OwnerId.ValueString(),
-			ShortName: config.ResourceGroupId.ShortName.ValueString(),
-		},
-		Name:    config.Name.ValueString(),
-		Version: config.Version.ValueString(),
-	}
-
-	blueprint, err := client.GetBlueprint(fractalId)
-	if err != nil {
-		diagnostics.AddError(
-			"Error Reading Fractal Cloud Blueprint",
-			"Could not read Fractal with Id "+fractalId.ToString()+": "+err.Error())
-		return BlueprintModel{}, true
-	}
-
-	if blueprint == nil {
-		diagnostics.AddError(
-			"Error Reading Fractal Cloud Blueprint",
-			"Could not find Fractal Cloud Blueprint with Id "+fractalId.ToString())
-		return BlueprintModel{}, true
-	}
-
+	blueprint *fractalCloud.Blueprint,
+	model *BlueprintModel,
+	diags *Diagnostics,
+) {
 	components := make([]ComponentModel, len(blueprint.Components))
 	for i, component := range blueprint.Components {
-		parameters, diags := types.MapValueFrom(ctx, types.StringType, component.Parameters)
-		diagnostics.Append(diags...)
+		parameters, d := types.MapValueFrom(ctx, types.StringType, component.Parameters)
+		diags.Append(d...)
 
-		dependenciesIds, diags := types.ListValueFrom(ctx, types.StringType, component.DependenciesIds)
-		diagnostics.Append(diags...)
+		dependenciesIds, d := types.ListValueFrom(ctx, types.StringType, component.DependenciesIds)
+		diags.Append(d...)
 
 		links := make([]LinkModel, len(component.Links))
 		for j, link := range component.Links {
-			settings, diags := types.MapValueFrom(ctx, types.StringType, link.Settings)
-			diagnostics.Append(diags...)
+			settings, d := types.MapValueFrom(ctx, types.StringType, link.Settings)
+			diags.Append(d...)
 
 			links[j] = LinkModel{
 				ComponentId: types.StringValue(link.ComponentId),
@@ -223,7 +222,7 @@ func GetFractalModel(
 			}
 		}
 
-		linksToMap, diags := types.ListValueFrom(ctx, types.ObjectType{
+		linksToMap, d := types.ListValueFrom(ctx, types.ObjectType{
 			AttrTypes: map[string]attr.Type{
 				"component_id": types.StringType,
 				"settings": types.MapType{
@@ -231,19 +230,19 @@ func GetFractalModel(
 				},
 			},
 		}, links)
-		diagnostics.Append(diags...)
+		diags.Append(d...)
 
-		outputFields, diags := types.ListValueFrom(ctx, types.StringType, component.OutputFields)
-		diagnostics.Append(diags...)
+		outputFields, d := types.ListValueFrom(ctx, types.StringType, component.OutputFields)
+		diags.Append(d...)
 
 		components[i] = ComponentModel{
 			Id:                types.StringValue(component.Id),
 			Type:              types.StringValue(component.Type),
-			DisplayName:       types.StringValue(component.DisplayName),
-			Description:       types.StringValue(component.Description),
-			Version:           types.StringValue(component.Version),
-			IsLocked:          types.BoolValue(component.IsLocked),
-			RecreateOnFailure: types.BoolValue(component.RecreateOnFailure),
+			DisplayName:       stringPointerToTFValue(component.DisplayName),
+			Description:       stringPointerToTFValue(component.Description),
+			Version:           stringPointerToTFValue(component.Version),
+			IsLocked:          boolPointerToTFValue(component.IsLocked),
+			RecreateOnFailure: boolPointerToTFValue(component.RecreateOnFailure),
 			Parameters:        parameters,
 			DependenciesIds:   dependenciesIds,
 			Links:             linksToMap,
@@ -251,7 +250,11 @@ func GetFractalModel(
 		}
 	}
 
-	componentsToMap, diags := types.ListValueFrom(ctx, types.ObjectType{
+	if diags.HasError() {
+		return
+	}
+
+	componentsToMap, d := types.ListValueFrom(ctx, types.ObjectType{
 		AttrTypes: map[string]attr.Type{
 			"id":                  basetypes.StringType{},
 			"type":                basetypes.StringType{},
@@ -281,17 +284,10 @@ func GetFractalModel(
 			},
 		},
 	}, components)
-	diagnostics.Append(diags...)
+	diags.Append(d...)
 
-	// Build state
-	state := BlueprintModel{
-		ResourceGroupId: config.ResourceGroupId,
-		Name:            config.Name,
-		Version:         config.Version,
-		Description:     types.StringValue(blueprint.Description),
-		IsPrivate:       types.BoolValue(blueprint.IsPrivate),
-		Components:      componentsToMap,
-		CreatedAt:       types.StringValue(blueprint.CreatedAt),
-	}
-	return state, false
+	model.Description = types.StringValue(blueprint.Description)
+	model.IsPrivate = types.BoolValue(blueprint.IsPrivate)
+	model.Components = componentsToMap
+	model.CreatedAt = types.StringValue(blueprint.CreatedAt)
 }

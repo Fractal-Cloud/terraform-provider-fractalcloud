@@ -12,8 +12,8 @@ resource "fractalcloud_management_environment" "production" {
     organization_id = "xxx"
     project_id = "xxx"
   }
-  resource_groups = [
-    fractalcloud_resource_group.production.id
+  bounded_contexts = [
+    fractalcloud_personal_bounded_context.production.id
   ]
 }
 
@@ -21,8 +21,8 @@ resource "fractalcloud_operational_environment" "toyota_production" {
   management_environment_id = fractalcloud_management_environment.production.id
   display_name = "Toyota Production"
   agents = ["Gcp"]
-  resource_groups = [
-    fractalcloud_resource_group.production_toyota.id
+  bounded_contexts = [
+    fractalcloud_personal_bounded_context.production_toyota.id
   ]
 }
 
@@ -30,9 +30,7 @@ resource "fractalcloud_operational_environment" "audi_production" {
   management_environment_id = fractalcloud_management_environment.production.id
   display_name = "Audi Production"
   agents = ["Azure"]
-  resource_groups = [
-    fractalcloud_resource_group.production_audi.id
+  bounded_contexts = [
+    fractalcloud_personal_bounded_context.production_audi.id
   ]
 }
-
-

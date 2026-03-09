@@ -1,10 +1,10 @@
 package fractalCloud
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -22,36 +22,28 @@ func (id *ResourceGroupId) ToString() string {
 	return id.Type + "/" + id.OwnerId + "/" + id.ShortName
 }
 
-// GetBlueprint - Returns specific organizational resource group
-func (c *Client) GetBlueprint(id FractalId) (*Blueprint, error) {
-	resourceGroupId := id.ResourceGroupId
-	path := fmt.Sprintf("%s/blueprints/%s/%s/%s/%s/%s",
-		c.HostURL, resourceGroupId.Type, resourceGroupId.OwnerId,
-		resourceGroupId.ShortName, id.Name, id.Version)
+// GetBlueprint - Returns specific blueprint (fractal definition).
+func (c *Client) GetBlueprint(ctx context.Context, id FractalId) (*Blueprint, error) {
+	path := c.blueprintPath(id)
+
 	req, err := http.NewRequest("GET", path, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("building GET request for fractal %q: %w", id.ToString(), err)
 	}
 
-	c.logDebug("Calling GET " + path)
-
-	resCode, body, err := c.doRequest(req, []int{200, 404})
+	resCode, body, err := c.doRequest(ctx, req, []int{200, 404})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("fetching fractal %q: %w", id.ToString(), err)
 	}
-
-	c.logDebug("Response code: " + strconv.Itoa(resCode))
 
 	if resCode == 404 {
+		c.logDebug(fmt.Sprintf("fractal %q not found", id.ToString()))
 		return nil, nil
 	}
 
-	c.logDebug(string(body))
-
 	blueprint := BlueprintInternal{}
-	err = json.Unmarshal(body, &blueprint)
-	if err != nil {
-		return nil, err
+	if err := json.Unmarshal(body, &blueprint); err != nil {
+		return nil, fmt.Errorf("decoding fractal %q response: %w", id.ToString(), err)
 	}
 
 	normalizedComponents := make([]Component, len(blueprint.Components))
@@ -66,11 +58,11 @@ func (c *Client) GetBlueprint(id FractalId) (*Blueprint, error) {
 		normalizedComponents[i] = Component{
 			Id:                component.Id,
 			Type:              component.Type,
-			DisplayName:       component.DisplayName,
-			Description:       component.Description,
-			Version:           component.Version,
-			IsLocked:          component.IsLocked,
-			RecreateOnFailure: component.RecreateOnFailure,
+			DisplayName:       &component.DisplayName,
+			Description:       &component.Description,
+			Version:           &component.Version,
+			IsLocked:          &component.IsLocked,
+			RecreateOnFailure: &component.RecreateOnFailure,
 			Parameters:        mapAnyToMapStringJSON(c.Logger, component.Parameters),
 			DependenciesIds:   component.DependenciesIds,
 			Links:             links,
@@ -124,9 +116,7 @@ type CreateBlueprintCommandRequestBody struct {
 	Components  []Component `json:"components"`
 }
 
-func (c *Client) CreateBlueprint(id FractalId, description string, isPrivate bool, components []Component) error {
-	resourceGroupId := id.ResourceGroupId
-
+func (c *Client) CreateBlueprint(ctx context.Context, id FractalId, description string, isPrivate bool, components []Component) error {
 	requestBody := CreateBlueprintCommandRequestBody{
 		Description: description,
 		IsPrivate:   isPrivate,
@@ -135,83 +125,68 @@ func (c *Client) CreateBlueprint(id FractalId, description string, isPrivate boo
 
 	rb, err := json.Marshal(requestBody)
 	if err != nil {
-		return err
+		return fmt.Errorf("encoding create fractal %q request: %w", id.ToString(), err)
 	}
 
-	path := fmt.Sprintf("%s/blueprints/%s/%s/%s/%s/%s",
-		c.HostURL, resourceGroupId.Type, resourceGroupId.OwnerId,
-		resourceGroupId.ShortName, id.Name, id.Version)
+	path := c.blueprintPath(id)
 
 	req, err := http.NewRequest("POST", path, strings.NewReader(string(rb)))
 	if err != nil {
-		return err
+		return fmt.Errorf("building POST request for fractal %q: %w", id.ToString(), err)
 	}
 
-	_, _, err = c.doRequest(req, []int{200})
-	return err
+	_, _, err = c.doRequest(ctx, req, []int{200, 202})
+	if err != nil {
+		return fmt.Errorf("creating fractal %q: %w", id.ToString(), err)
+	}
+	return nil
 }
 
-type UpdateBlueprintCommandRequest struct {
-	ResourceGroupId ResourceGroupId `json:"resourceGroupId"`
-	FractalName     string          `json:"fractalName"`
-	FractalVersion  string          `json:"fractalVersion"`
-	Description     string          `json:"description"`
-	IsPrivate       bool            `json:"isPrivate"`
-	Components      []Component     `json:"components"`
-}
-
-func (c *Client) UpdateBlueprint(id FractalId, description string, isPrivate bool, components []Component) error {
-	return c.UpdateBlueprintWithNewId(id, id, description, isPrivate, components)
-}
-
-func (c *Client) UpdateBlueprintWithNewId(id FractalId, newId FractalId, description string, isPrivate bool, components []Component) error {
-	resourceGroupId := id.ResourceGroupId
-
-	requestBody := UpdateBlueprintCommandRequest{
-		ResourceGroupId: resourceGroupId,
-		FractalName:     newId.Name,
-		FractalVersion:  newId.Version,
-		Description:     description,
-		IsPrivate:       isPrivate,
-		Components:      components,
+func (c *Client) UpdateBlueprint(ctx context.Context, id FractalId, description string, isPrivate bool, components []Component) error {
+	requestBody := CreateBlueprintCommandRequestBody{
+		Description: description,
+		IsPrivate:   isPrivate,
+		Components:  components,
 	}
 
 	rb, err := json.Marshal(requestBody)
 	if err != nil {
-		return err
+		return fmt.Errorf("encoding update fractal %q request: %w", id.ToString(), err)
 	}
 
-	path := fmt.Sprintf("%s/blueprints/%s/%s/%s/%s/%s",
-		c.HostURL, resourceGroupId.Type, resourceGroupId.OwnerId,
-		resourceGroupId.ShortName, id.Name, id.Version)
+	path := c.blueprintPath(id)
 
 	req, err := http.NewRequest("PUT", path, strings.NewReader(string(rb)))
 	if err != nil {
-		return err
+		return fmt.Errorf("building PUT request for fractal %q: %w", id.ToString(), err)
 	}
 
-	_, _, err = c.doRequest(req, []int{200})
-	return err
+	_, _, err = c.doRequest(ctx, req, []int{200, 202})
+	if err != nil {
+		return fmt.Errorf("updating fractal %q: %w", id.ToString(), err)
+	}
+	return nil
 }
 
-func (c *Client) DeleteBlueprint(id FractalId) error {
-	resourceGroupId := id.ResourceGroupId
-
-	path := fmt.Sprintf("%s/blueprints/%s/%s/%s/%s/%s",
-		c.HostURL, resourceGroupId.Type, resourceGroupId.OwnerId,
-		resourceGroupId.ShortName, id.Name, id.Version)
+func (c *Client) DeleteBlueprint(ctx context.Context, id FractalId) error {
+	path := c.blueprintPath(id)
 
 	req, err := http.NewRequest("DELETE", path, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("building DELETE request for fractal %q: %w", id.ToString(), err)
 	}
 
-	_, _, err = c.doRequest(req, []int{200, 404})
+	_, _, err = c.doRequest(ctx, req, []int{200, 202, 404})
 	if err != nil {
-		return err
+		return fmt.Errorf("deleting fractal %q: %w", id.ToString(), err)
 	}
-
 	return nil
+}
+
+func (c *Client) blueprintPath(id FractalId) string {
+	rg := id.ResourceGroupId
+	return fmt.Sprintf("%s/blueprints/%s/%s/%s/%s/%s",
+		c.HostURL, rg.Type, rg.OwnerId, rg.ShortName, id.Name, id.Version)
 }
 
 func mapAnyToMapStringJSON(logger *ClientLogger, in map[string]interface{}) map[string]string {
@@ -221,8 +196,8 @@ func mapAnyToMapStringJSON(logger *ClientLogger, in map[string]interface{}) map[
 		b, err := json.Marshal(v)
 		if err == nil {
 			out[k] = string(b)
-		} else {
-			logger.Warning(fmt.Sprintf("marshal key %q: %w", k, err))
+		} else if logger != nil && logger.Warning != nil {
+			logger.Warning(fmt.Sprintf("marshal key %q: %v", k, err))
 		}
 	}
 

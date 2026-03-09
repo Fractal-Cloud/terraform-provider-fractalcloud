@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -28,9 +29,7 @@ type OrganizationDataSource struct {
 }
 
 // Configure adds the provider configured client to the data source.
-func (d *OrganizationDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Add a nil check when handling ProviderData because Terraform
-	// sets that data after it calls the ConfigureProvider RPC.
+func (d *OrganizationDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -41,7 +40,6 @@ func (d *OrganizationDataSource) Configure(ctx context.Context, req datasource.C
 			"Unexpected Data Source Configure Type",
 			fmt.Sprintf("Expected *fractalCloud.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
-
 		return
 	}
 
@@ -89,7 +87,7 @@ func (d *OrganizationDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				Computed:    true,
 				ElementType: basetypes.StringType{},
 			},
-			"resource_groups": schema.ListAttribute{
+			"bounded_contexts": schema.ListAttribute{
 				Computed:    true,
 				ElementType: basetypes.StringType{},
 			},
@@ -115,61 +113,59 @@ func (d *OrganizationDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 	}
 }
 
-// OrganizationModel maps resource group schema data.
+// OrganizationModel maps organization schema data.
 type OrganizationModel struct {
-	Id             types.String `tfsdk:"id"`
-	DisplayName    types.String `tfsdk:"display_name"`
-	Description    types.String `tfsdk:"description"`
-	Icon           types.String `tfsdk:"icon"`
-	Tags           types.List   `tfsdk:"tags"`
-	SocialLinks    types.List   `tfsdk:"social_links"`
-	Admins         types.List   `tfsdk:"admins"`
-	Members        types.List   `tfsdk:"members"`
-	Teams          types.List   `tfsdk:"teams"`
-	ResourceGroups types.List   `tfsdk:"resource_groups"`
-	Status         types.String `tfsdk:"status"`
-	SubscriptionId types.String `tfsdk:"subscription_id"`
-	CreatedAt      types.String `tfsdk:"created_at"`
-	CreatedBy      types.String `tfsdk:"created_by"`
-	UpdatedAt      types.String `tfsdk:"updated_at"`
-	UpdatedBy      types.String `tfsdk:"updated_by"`
+	Id              types.String `tfsdk:"id"`
+	DisplayName     types.String `tfsdk:"display_name"`
+	Description     types.String `tfsdk:"description"`
+	Icon            types.String `tfsdk:"icon"`
+	Tags            types.List   `tfsdk:"tags"`
+	SocialLinks     types.List   `tfsdk:"social_links"`
+	Admins          types.List   `tfsdk:"admins"`
+	Members         types.List   `tfsdk:"members"`
+	Teams           types.List   `tfsdk:"teams"`
+	BoundedContexts types.List   `tfsdk:"bounded_contexts"`
+	Status          types.String `tfsdk:"status"`
+	SubscriptionId  types.String `tfsdk:"subscription_id"`
+	CreatedAt       types.String `tfsdk:"created_at"`
+	CreatedBy       types.String `tfsdk:"created_by"`
+	UpdatedAt       types.String `tfsdk:"updated_at"`
+	UpdatedBy       types.String `tfsdk:"updated_by"`
 }
 
 // Read refreshes the Terraform state with the latest data.
 func (d *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var config OrganizationModel
-
-	// Read user configuration
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Validate required input isn't unknown/null
-	if config.Id.IsUnknown() || config.Id.IsNull() {
+	orgId := config.Id.ValueString()
+	if config.Id.IsUnknown() || config.Id.IsNull() || orgId == "" {
 		resp.Diagnostics.AddError(
-			"Unknown required value",
-			fmt.Sprintf("Id is required, but its value is unknown, null or empty."),
+			"Invalid Organization ID",
+			"The id attribute is required and must not be empty.",
 		)
 		return
 	}
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	tflog.Debug(ctx, "reading organization data source", map[string]any{"organization_id": orgId})
 
-	organization, err := d.client.GetOrganization(config.Id.ValueString())
+	organization, err := d.client.GetOrganization(ctx, orgId)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Fractal Organization",
-			"Could not read Fractal Organization with Id "+config.Id.ValueString()+": "+err.Error())
+			"Error Reading Organization",
+			fmt.Sprintf("Could not read organization %q: %s", orgId, err),
+		)
 		return
 	}
 
 	if organization == nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Fractal Organization",
-			"Could not find Fractal Organization with Id "+config.Id.ValueString())
+			"Organization Not Found",
+			fmt.Sprintf("No organization found with id %q.", orgId),
+		)
 		return
 	}
 
@@ -188,30 +184,31 @@ func (d *OrganizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 	teams, diags := types.ListValueFrom(ctx, types.StringType, organization.TeamsIds)
 	resp.Diagnostics.Append(diags...)
 
-	resourceGroups, diags := types.ListValueFrom(ctx, types.StringType, organization.ResourceGroupsIds)
+	boundedContexts, diags := types.ListValueFrom(ctx, types.StringType, organization.ResourceGroupsIds)
 	resp.Diagnostics.Append(diags...)
 
-	// Build state
-	state := OrganizationModel{
-		// For data sources, the `id` in state should be stable. Often it's the same as input.
-		Id:             types.StringValue(organization.Id),
-		DisplayName:    types.StringValue(organization.DisplayName),
-		Description:    types.StringValue(organization.Description),
-		Icon:           types.StringValue(organization.Icon),
-		Tags:           tags,
-		SocialLinks:    socialLinks,
-		Admins:         admins,
-		Members:        members,
-		Teams:          teams,
-		ResourceGroups: resourceGroups,
-		Status:         types.StringValue(organization.Status),
-		SubscriptionId: types.StringValue(organization.SubscriptionId),
-		CreatedAt:      types.StringValue(organization.CreatedAt),
-		CreatedBy:      types.StringValue(organization.CreatedBy),
-		UpdatedAt:      types.StringValue(organization.UpdatedAt),
-		UpdatedBy:      types.StringValue(organization.UpdatedBy),
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
-	// Write state
+	state := OrganizationModel{
+		Id:              types.StringValue(organization.Id),
+		DisplayName:     types.StringValue(organization.DisplayName),
+		Description:     types.StringValue(organization.Description),
+		Icon:            types.StringValue(organization.Icon),
+		Tags:            tags,
+		SocialLinks:     socialLinks,
+		Admins:          admins,
+		Members:         members,
+		Teams:           teams,
+		BoundedContexts: boundedContexts,
+		Status:          types.StringValue(organization.Status),
+		SubscriptionId:  types.StringValue(organization.SubscriptionId),
+		CreatedAt:       types.StringValue(organization.CreatedAt),
+		CreatedBy:       types.StringValue(organization.CreatedBy),
+		UpdatedAt:       types.StringValue(organization.UpdatedAt),
+		UpdatedBy:       types.StringValue(organization.UpdatedBy),
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

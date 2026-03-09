@@ -75,7 +75,7 @@ func (r *ManagementEnvironment) Schema(_ context.Context, _ resource.SchemaReque
 			"display_name": schema.StringAttribute{
 				Required: true,
 			},
-			"resource_groups": schema.ListAttribute{
+			"bounded_contexts": schema.ListAttribute{
 				Required: true,
 				ElementType: basetypes.ObjectType{
 					AttrTypes: map[string]attr.Type{
