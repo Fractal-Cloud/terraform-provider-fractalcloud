@@ -6,6 +6,7 @@ import (
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -16,7 +17,8 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ provider.Provider = &fractalCloudProvider{}
+	_ provider.Provider              = &fractalCloudProvider{}
+	_ provider.ProviderWithFunctions = &fractalCloudProvider{}
 )
 
 // New is a helper function to simplify provider server and testing implementation.
@@ -163,5 +165,17 @@ func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Re
 		NewManagementEnvironment,
 		NewOperationalEnvironment,
 		NewFractal,
+	}
+}
+
+// Functions defines the provider functions for building blueprint components.
+func (p *fractalCloudProvider) Functions(_ context.Context) []func() function.Function {
+	return []func() function.Function{
+		NewVirtualNetworkFunction,
+		NewSubnetFunction,
+		NewSecurityGroupFunction,
+		NewVirtualMachineFunction,
+		NewContainerPlatformFunction,
+		NewWorkloadFunction,
 	}
 }
