@@ -69,6 +69,7 @@ func (f *VirtualNetworkFunction) Run(ctx context.Context, req function.RunReques
 		optionalString(config.Version),
 		params,
 		nil,
+		nil,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

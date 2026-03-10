@@ -151,6 +151,7 @@ func (f *SecurityGroupFunction) Run(ctx context.Context, req function.RunRequest
 		optionalString(config.Version),
 		params,
 		deps,
+		nil,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

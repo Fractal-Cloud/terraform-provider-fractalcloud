@@ -22,8 +22,10 @@ func (f *VirtualMachineFunction) Metadata(_ context.Context, _ function.Metadata
 
 func (f *VirtualMachineFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary:     "Creates a VirtualMachine blueprint component",
-		Description: "Builds a VirtualMachine (VM/EC2) component with the correct type for use in a fractal's components list. If subnet_id is provided, it is automatically added as a dependency.",
+		Summary: "Creates a VirtualMachine blueprint component",
+		Description: "Builds a VirtualMachine (VM/EC2) component with the correct type for use in a fractal's components list. " +
+			"If subnet_id is provided, it is automatically added as a dependency. " +
+			"Use links for port-based traffic rules to other components, and security_groups for SG membership.",
 		Parameters: []function.Parameter{
 			function.ObjectParameter{
 				Name:        "config",
@@ -34,6 +36,10 @@ func (f *VirtualMachineFunction) Definition(_ context.Context, _ function.Defini
 					"description":  types.StringType,
 					"version":      types.StringType,
 					"subnet_id":    types.StringType,
+					"links": types.ListType{
+						ElemType: types.ObjectType{AttrTypes: portLinkAttrTypes},
+					},
+					"security_groups": types.ListType{ElemType: types.StringType},
 				},
 			},
 		},
@@ -42,11 +48,13 @@ func (f *VirtualMachineFunction) Definition(_ context.Context, _ function.Defini
 }
 
 type virtualMachineConfig struct {
-	Id          types.String `tfsdk:"id"`
-	DisplayName types.String `tfsdk:"display_name"`
-	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
-	SubnetId    types.String `tfsdk:"subnet_id"`
+	Id             types.String `tfsdk:"id"`
+	DisplayName    types.String `tfsdk:"display_name"`
+	Description    types.String `tfsdk:"description"`
+	Version        types.String `tfsdk:"version"`
+	SubnetId       types.String `tfsdk:"subnet_id"`
+	Links          types.List   `tfsdk:"links"`
+	SecurityGroups types.List   `tfsdk:"security_groups"`
 }
 
 func (f *VirtualMachineFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -61,6 +69,29 @@ func (f *VirtualMachineFunction) Run(ctx context.Context, req function.RunReques
 		deps = append(deps, config.SubnetId.ValueString())
 	}
 
+	// Build links from port-based traffic rules and SG memberships
+	var links []componentLink
+
+	if !config.Links.IsNull() && !config.Links.IsUnknown() {
+		var portLinks []portLinkConfig
+		diags := config.Links.ElementsAs(ctx, &portLinks, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse links")
+			return
+		}
+		links = append(links, portLinksToComponentLinks(portLinks)...)
+	}
+
+	if !config.SecurityGroups.IsNull() && !config.SecurityGroups.IsUnknown() {
+		var sgIds []string
+		diags := config.SecurityGroups.ElementsAs(ctx, &sgIds, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse security_groups")
+			return
+		}
+		links = append(links, sgMembershipLinks(sgIds)...)
+	}
+
 	result, funcErr := buildComponent(
 		config.Id.ValueString(),
 		"NetworkAndCompute.IaaS.VirtualMachine",
@@ -69,6 +100,7 @@ func (f *VirtualMachineFunction) Run(ctx context.Context, req function.RunReques
 		optionalString(config.Version),
 		nil,
 		deps,
+		links,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

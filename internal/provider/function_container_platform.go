@@ -62,6 +62,7 @@ func (f *ContainerPlatformFunction) Run(ctx context.Context, req function.RunReq
 		optionalString(config.Version),
 		nil,
 		nil,
+		nil,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

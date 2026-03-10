@@ -23,8 +23,10 @@ func (f *WorkloadFunction) Metadata(_ context.Context, _ function.MetadataReques
 
 func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
 	resp.Definition = function.Definition{
-		Summary:     "Creates a Workload blueprint component",
-		Description: "Builds a containerized Workload component with the correct type and parameters for use in a fractal's components list. If platform_id or subnet_id are provided, they are automatically added as dependencies.",
+		Summary: "Creates a Workload blueprint component",
+		Description: "Builds a containerized Workload component with the correct type and parameters for use in a fractal's components list. " +
+			"If platform_id or subnet_id are provided, they are automatically added as dependencies. " +
+			"Use links for port-based traffic rules to other workloads, and security_groups for SG membership.",
 		Parameters: []function.Parameter{
 			function.ObjectParameter{
 				Name:        "config",
@@ -42,6 +44,10 @@ func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRe
 					"desired_count":   types.Int64Type,
 					"platform_id":     types.StringType,
 					"subnet_id":       types.StringType,
+					"links": types.ListType{
+						ElemType: types.ObjectType{AttrTypes: portLinkAttrTypes},
+					},
+					"security_groups": types.ListType{ElemType: types.StringType},
 				},
 			},
 		},
@@ -62,6 +68,8 @@ type workloadConfig struct {
 	DesiredCount   types.Int64  `tfsdk:"desired_count"`
 	PlatformId     types.String `tfsdk:"platform_id"`
 	SubnetId       types.String `tfsdk:"subnet_id"`
+	Links          types.List   `tfsdk:"links"`
+	SecurityGroups types.List   `tfsdk:"security_groups"`
 }
 
 func (f *WorkloadFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -100,6 +108,29 @@ func (f *WorkloadFunction) Run(ctx context.Context, req function.RunRequest, res
 		deps = append(deps, config.SubnetId.ValueString())
 	}
 
+	// Build links from port-based traffic rules and SG memberships
+	var links []componentLink
+
+	if !config.Links.IsNull() && !config.Links.IsUnknown() {
+		var portLinks []portLinkConfig
+		diags := config.Links.ElementsAs(ctx, &portLinks, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse links")
+			return
+		}
+		links = append(links, portLinksToComponentLinks(portLinks)...)
+	}
+
+	if !config.SecurityGroups.IsNull() && !config.SecurityGroups.IsUnknown() {
+		var sgIds []string
+		diags := config.SecurityGroups.ElementsAs(ctx, &sgIds, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse security_groups")
+			return
+		}
+		links = append(links, sgMembershipLinks(sgIds)...)
+	}
+
 	result, funcErr := buildComponent(
 		config.Id.ValueString(),
 		"CustomWorkloads.CaaS.Workload",
@@ -108,6 +139,7 @@ func (f *WorkloadFunction) Run(ctx context.Context, req function.RunRequest, res
 		optionalString(config.Version),
 		params,
 		deps,
+		links,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

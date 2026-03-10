@@ -81,6 +81,7 @@ func (f *SubnetFunction) Run(ctx context.Context, req function.RunRequest, resp 
 		optionalString(config.Version),
 		params,
 		deps,
+		nil,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {
