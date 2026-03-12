@@ -11,12 +11,14 @@ locals {
   org_main_vpc = provider::fractalcloud::network_and_compute_iaas_virtual_network({
     id           = "main-vpc"
     display_name = "Main VPC"
+    description  = "Primary VPC for the organization IaaS architecture"
     cidr_block   = "10.0.0.0/16"
   })
 
   org_web_subnet = provider::fractalcloud::network_and_compute_iaas_subnet({
     id                = "web-subnet"
     display_name      = "Web Tier Subnet"
+    description       = "Web tier subnet in eu-central-1a"
     cidr_block        = "10.0.1.0/24"
     availability_zone = "eu-central-1a"
     vpc               = local.org_main_vpc
@@ -25,15 +27,17 @@ locals {
   org_app_subnet = provider::fractalcloud::network_and_compute_iaas_subnet({
     id                = "app-subnet"
     display_name      = "App Tier Subnet"
+    description       = "Application tier subnet in eu-central-1b"
     cidr_block        = "10.0.2.0/24"
     availability_zone = "eu-central-1b"
     vpc               = local.org_main_vpc
   })
 
   org_web_sg = provider::fractalcloud::network_and_compute_iaas_security_group({
-    id          = "web-sg"
-    description = "Allow HTTPS from internet"
-    vpc         = local.org_main_vpc
+    id           = "web-sg"
+    display_name = "Web Security Group"
+    description  = "Allow HTTPS from internet"
+    vpc          = local.org_main_vpc
     ingress_rules = [
       {
         from_port   = 443
@@ -43,9 +47,10 @@ locals {
   })
 
   org_app_sg = provider::fractalcloud::network_and_compute_iaas_security_group({
-    id          = "app-sg"
-    description = "Allow traffic from web tier only"
-    vpc         = local.org_main_vpc
+    id           = "app-sg"
+    display_name = "App Security Group"
+    description  = "Allow traffic from web tier only"
+    vpc          = local.org_main_vpc
     ingress_rules = [
       {
         from_port           = 8080
@@ -58,14 +63,17 @@ locals {
   org_app_server = provider::fractalcloud::network_and_compute_iaas_virtual_machine({
     id              = "app-server"
     display_name    = "Application Server"
+    description     = "Application tier server"
     subnet          = local.org_app_subnet
     security_groups = [local.org_app_sg]
+    links           = []
   })
 
   # Web server: depends on web-subnet, member of web-sg, links to app-server on port 8080
   org_web_server = provider::fractalcloud::network_and_compute_iaas_virtual_machine({
     id              = "web-server"
     display_name    = "Web Server"
+    description     = "Web tier server"
     subnet          = local.org_web_subnet
     security_groups = [local.org_web_sg]
     links = [

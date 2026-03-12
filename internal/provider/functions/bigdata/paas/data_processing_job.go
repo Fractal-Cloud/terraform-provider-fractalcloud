@@ -37,7 +37,6 @@ func (f *BigdataPaasDataProcessingJobFunction) Definition(_ context.Context, _ f
 					"id":               types.StringType,
 					"display_name":     types.StringType,
 					"description":      types.StringType,
-					"version":          types.StringType,
 					"platform":         components.ComponentObjectType,
 					"job_name":         types.StringType,
 					"task_type":        types.StringType,
@@ -60,7 +59,6 @@ type bigdataPaasDataProcessingJobConfig struct {
 	Id              types.String `tfsdk:"id"`
 	DisplayName     types.String `tfsdk:"display_name"`
 	Description     types.String `tfsdk:"description"`
-	Version         types.String `tfsdk:"version"`
 	Platform        types.Object `tfsdk:"platform"`
 	JobName         types.String `tfsdk:"job_name"`
 	TaskType        types.String `tfsdk:"task_type"`
@@ -139,7 +137,7 @@ func (f *BigdataPaasDataProcessingJobFunction) Run(ctx context.Context, req func
 		"BigData.PaaS.DataProcessingJob",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		nil,

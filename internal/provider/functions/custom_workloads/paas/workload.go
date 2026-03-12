@@ -37,7 +37,6 @@ func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRe
 					"id":              types.StringType,
 					"display_name":    types.StringType,
 					"description":     types.StringType,
-					"version":         types.StringType,
 					"container_image": types.StringType,
 					"container_port":  types.Int64Type,
 					"container_name":  types.StringType,
@@ -61,7 +60,6 @@ type workloadConfig struct {
 	Id             types.String `tfsdk:"id"`
 	DisplayName    types.String `tfsdk:"display_name"`
 	Description    types.String `tfsdk:"description"`
-	Version        types.String `tfsdk:"version"`
 	ContainerImage types.String `tfsdk:"container_image"`
 	ContainerPort  types.Int64  `tfsdk:"container_port"`
 	ContainerName  types.String `tfsdk:"container_name"`
@@ -159,7 +157,7 @@ func (f *WorkloadFunction) Run(ctx context.Context, req function.RunRequest, res
 		"CustomWorkloads.PaaS.Workload",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		links,

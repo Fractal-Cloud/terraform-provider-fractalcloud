@@ -34,7 +34,6 @@ func (f *CaaSAPIGatewayFunction) Definition(_ context.Context, _ function.Defini
 					"id":                 types.StringType,
 					"display_name":       types.StringType,
 					"description":        types.StringType,
-					"version":            types.StringType,
 					"container_platform": components.ComponentObjectType,
 				},
 			},
@@ -47,7 +46,6 @@ type caasAPIGatewayConfig struct {
 	Id                types.String `tfsdk:"id"`
 	DisplayName       types.String `tfsdk:"display_name"`
 	Description       types.String `tfsdk:"description"`
-	Version           types.String `tfsdk:"version"`
 	ContainerPlatform types.Object `tfsdk:"container_platform"`
 }
 
@@ -73,7 +71,7 @@ func (f *CaaSAPIGatewayFunction) Run(ctx context.Context, req function.RunReques
 		"APIManagement.CaaS.APIGateway",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		deps,
 		nil,

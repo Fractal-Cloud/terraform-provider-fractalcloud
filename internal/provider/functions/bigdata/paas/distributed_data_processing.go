@@ -34,7 +34,6 @@ func (f *BigdataPaasDistributedDataProcessingFunction) Definition(_ context.Cont
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"pricing_tier": types.StringType,
 				},
 			},
@@ -47,7 +46,6 @@ type bigdataPaasDistributedDataProcessingConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 	PricingTier types.String `tfsdk:"pricing_tier"`
 }
 
@@ -68,7 +66,7 @@ func (f *BigdataPaasDistributedDataProcessingFunction) Run(ctx context.Context, 
 		"BigData.PaaS.DistributedDataProcessing",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		nil,
 		nil,

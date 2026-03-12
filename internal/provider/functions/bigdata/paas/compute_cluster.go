@@ -37,7 +37,6 @@ func (f *BigdataPaasComputeClusterFunction) Definition(_ context.Context, _ func
 					"id":                       types.StringType,
 					"display_name":             types.StringType,
 					"description":              types.StringType,
-					"version":                  types.StringType,
 					"platform":                 components.ComponentObjectType,
 					"cluster_name":             types.StringType,
 					"spark_version":            types.StringType,
@@ -60,7 +59,6 @@ type bigdataPaasComputeClusterConfig struct {
 	Id                     types.String `tfsdk:"id"`
 	DisplayName            types.String `tfsdk:"display_name"`
 	Description            types.String `tfsdk:"description"`
-	Version                types.String `tfsdk:"version"`
 	Platform               types.Object `tfsdk:"platform"`
 	ClusterName            types.String `tfsdk:"cluster_name"`
 	SparkVersion           types.String `tfsdk:"spark_version"`
@@ -159,7 +157,7 @@ func (f *BigdataPaasComputeClusterFunction) Run(ctx context.Context, req functio
 		"BigData.PaaS.ComputeCluster",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		nil,

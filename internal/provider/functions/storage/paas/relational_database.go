@@ -35,7 +35,6 @@ func (f *StoragePaasRelationalDatabaseFunction) Definition(_ context.Context, _ 
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"collation":    types.StringType,
 					"charset":      types.StringType,
 					"dbms":         components.ComponentObjectType,
@@ -50,7 +49,6 @@ type storagePaasRelationalDatabaseConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 	Collation   types.String `tfsdk:"collation"`
 	Charset     types.String `tfsdk:"charset"`
 	Dbms        types.Object `tfsdk:"dbms"`
@@ -87,7 +85,7 @@ func (f *StoragePaasRelationalDatabaseFunction) Run(ctx context.Context, req fun
 		"Storage.PaaS.RelationalDatabase",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		nil,

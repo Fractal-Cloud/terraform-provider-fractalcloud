@@ -46,6 +46,7 @@ locals {
       "pyarrow>=14.0",
       "great-expectations>=0.18"
     ]
+    maven_libraries = []
   })
 
   # Dedicated ETL cluster with autoscaling for batch workloads
@@ -71,6 +72,7 @@ locals {
       "org.apache.hadoop:hadoop-aws:3.3.4",
       "io.delta:delta-core_2.12:2.4.0"
     ]
+    pypi_libraries = []
   })
 
   # ── Data processing jobs ───────────────────────────────────────────────
@@ -84,6 +86,9 @@ locals {
     job_name         = "daily-data-ingestion"
     task_type        = "notebook"
     notebook_path    = "/Repos/data-team/pipelines/ingestion/daily_load"
+    python_file      = null
+    main_class_name  = null
+    jar_uri          = null
     cron_schedule    = "0 2 * * *"
     max_retries      = 3
     existing_cluster = false
@@ -98,7 +103,10 @@ locals {
     platform         = local.spark_platform
     job_name         = "hourly-data-transform"
     task_type        = "python"
+    notebook_path    = null
     python_file      = "dbfs:/pipelines/transform/medallion_etl.py"
+    main_class_name  = null
+    jar_uri          = null
     cron_schedule    = "0 * * * *"
     max_retries      = 2
     existing_cluster = true
@@ -114,6 +122,9 @@ locals {
     job_name         = "weekly-model-retrain"
     task_type        = "notebook"
     notebook_path    = "/Repos/ml-team/training/retrain_models"
+    python_file      = null
+    main_class_name  = null
+    jar_uri          = null
     cron_schedule    = "0 6 * * 0"
     max_retries      = 1
     existing_cluster = false
@@ -128,11 +139,14 @@ locals {
     platform         = local.spark_platform
     job_name         = "batch-aggregate-reports"
     task_type        = "jar"
+    notebook_path    = null
+    python_file      = null
     main_class_name  = "com.example.pipelines.AggregateReports"
     jar_uri          = "dbfs:/jars/aggregate-reports-1.0.jar"
     cron_schedule    = "0 4 * * *"
     max_retries      = 2
     existing_cluster = false
+    parameters       = []
   })
 
   # ── ML experiment tracking ─────────────────────────────────────────────

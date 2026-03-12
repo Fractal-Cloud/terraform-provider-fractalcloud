@@ -34,7 +34,6 @@ func (f *SubnetFunction) Definition(_ context.Context, _ function.DefinitionRequ
 					"id":                types.StringType,
 					"display_name":      types.StringType,
 					"description":       types.StringType,
-					"version":           types.StringType,
 					"cidr_block":        types.StringType,
 					"availability_zone": types.StringType,
 					"vpc":               components.ComponentObjectType,
@@ -49,7 +48,6 @@ type subnetConfig struct {
 	Id               types.String `tfsdk:"id"`
 	DisplayName      types.String `tfsdk:"display_name"`
 	Description      types.String `tfsdk:"description"`
-	Version          types.String `tfsdk:"version"`
 	CidrBlock        types.String `tfsdk:"cidr_block"`
 	AvailabilityZone types.String `tfsdk:"availability_zone"`
 	Vpc              types.Object `tfsdk:"vpc"`
@@ -85,7 +83,7 @@ func (f *SubnetFunction) Run(ctx context.Context, req function.RunRequest, resp 
 		"NetworkAndCompute.IaaS.Subnet",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		nil,
