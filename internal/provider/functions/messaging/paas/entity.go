@@ -36,7 +36,6 @@ func (f *MessagingPaasEntityFunction) Definition(_ context.Context, _ function.D
 					"id":                      types.StringType,
 					"display_name":            types.StringType,
 					"description":             types.StringType,
-					"version":                 types.StringType,
 					"message_retention_hours": types.Int64Type,
 					"broker":                  components.ComponentObjectType,
 				},
@@ -50,7 +49,6 @@ type messagingPaasEntityConfig struct {
 	Id                    types.String `tfsdk:"id"`
 	DisplayName           types.String `tfsdk:"display_name"`
 	Description           types.String `tfsdk:"description"`
-	Version               types.String `tfsdk:"version"`
 	MessageRetentionHours types.Int64  `tfsdk:"message_retention_hours"`
 	Broker                types.Object `tfsdk:"broker"`
 }
@@ -83,7 +81,7 @@ func (f *MessagingPaasEntityFunction) Run(ctx context.Context, req function.RunR
 		"Messaging.PaaS.Entity",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		nil,

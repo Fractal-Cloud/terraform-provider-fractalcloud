@@ -34,7 +34,6 @@ func (f *MessagingPaasBrokerFunction) Definition(_ context.Context, _ function.D
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 				},
 			},
 		},
@@ -46,7 +45,6 @@ type messagingPaasBrokerConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 }
 
 func (f *MessagingPaasBrokerFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -61,7 +59,7 @@ func (f *MessagingPaasBrokerFunction) Run(ctx context.Context, req function.RunR
 		"Messaging.PaaS.Broker",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		nil,
 		nil,

@@ -389,7 +389,7 @@ To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
 
 This project is licensed under the GNU General Public License v3.0 -- see the [LICENSE](LICENSE) file for details.
 
-[build-image]: https://github.com/FractalCloud/terraform-provider-fractalcloud/actions/workflows/pr.yml/badge.svg
-[build-url]: https://github.com/FractalCloud/terraform-provider-fractalcloud/actions/workflows/pr.yml
-[codecov-image]: https://codecov.io/gh/FractalCloud/terraform-provider-fractalcloud/branch/main/graph/badge.svg
-[codecov-url]: https://codecov.io/gh/FractalCloud/terraform-provider-fractalcloud
+[build-image]: https://github.com/Fractal-Cloud/terraform-provider-fractalcloud/actions/workflows/pr.yml/badge.svg
+[build-url]: https://github.com/Fractal-Cloud/terraform-provider-fractalcloud/actions/workflows/pr.yml
+[codecov-image]: https://codecov.io/gh/Fractal-Cloud/terraform-provider-fractalcloud/branch/main/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/Fractal-Cloud/terraform-provider-fractalcloud

@@ -34,7 +34,6 @@ func (f *StoragePaasRelationalDbmsFunction) Definition(_ context.Context, _ func
 					"id":             types.StringType,
 					"display_name":   types.StringType,
 					"description":    types.StringType,
-					"version":        types.StringType,
 					"engine_version": types.StringType,
 				},
 			},
@@ -47,7 +46,6 @@ type storagePaasRelationalDbmsConfig struct {
 	Id            types.String `tfsdk:"id"`
 	DisplayName   types.String `tfsdk:"display_name"`
 	Description   types.String `tfsdk:"description"`
-	Version       types.String `tfsdk:"version"`
 	EngineVersion types.String `tfsdk:"engine_version"`
 }
 
@@ -69,7 +67,7 @@ func (f *StoragePaasRelationalDbmsFunction) Run(ctx context.Context, req functio
 		"Storage.PaaS.RelationalDbms",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		nil,
 		nil,

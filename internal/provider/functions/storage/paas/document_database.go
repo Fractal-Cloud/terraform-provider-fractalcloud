@@ -35,7 +35,6 @@ func (f *StoragePaasDocumentDatabaseFunction) Definition(_ context.Context, _ fu
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"dbms":         components.ComponentObjectType,
 				},
 			},
@@ -48,7 +47,6 @@ type storagePaasDocumentDatabaseConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 	Dbms        types.Object `tfsdk:"dbms"`
 }
 
@@ -74,7 +72,7 @@ func (f *StoragePaasDocumentDatabaseFunction) Run(ctx context.Context, req funct
 		"Storage.PaaS.DocumentDatabase",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		deps,
 		nil,

@@ -36,7 +36,6 @@ func (f *VirtualMachineFunction) Definition(_ context.Context, _ function.Defini
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"subnet":       components.ComponentObjectType,
 					"links": types.ListType{
 						ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes},
@@ -53,7 +52,6 @@ type virtualMachineConfig struct {
 	Id             types.String `tfsdk:"id"`
 	DisplayName    types.String `tfsdk:"display_name"`
 	Description    types.String `tfsdk:"description"`
-	Version        types.String `tfsdk:"version"`
 	Subnet         types.Object `tfsdk:"subnet"`
 	Links          types.List   `tfsdk:"links"`
 	SecurityGroups types.List   `tfsdk:"security_groups"`
@@ -114,7 +112,7 @@ func (f *VirtualMachineFunction) Run(ctx context.Context, req function.RunReques
 		"NetworkAndCompute.IaaS.VirtualMachine",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		deps,
 		links,

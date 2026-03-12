@@ -35,7 +35,6 @@ func (f *BigdataPaasMlExperimentFunction) Definition(_ context.Context, _ functi
 					"id":                types.StringType,
 					"display_name":      types.StringType,
 					"description":       types.StringType,
-					"version":           types.StringType,
 					"platform":          components.ComponentObjectType,
 					"experiment_name":   types.StringType,
 					"artifact_location": types.StringType,
@@ -50,7 +49,6 @@ type bigdataPaasMlExperimentConfig struct {
 	Id               types.String `tfsdk:"id"`
 	DisplayName      types.String `tfsdk:"display_name"`
 	Description      types.String `tfsdk:"description"`
-	Version          types.String `tfsdk:"version"`
 	Platform         types.Object `tfsdk:"platform"`
 	ExperimentName   types.String `tfsdk:"experiment_name"`
 	ArtifactLocation types.String `tfsdk:"artifact_location"`
@@ -87,7 +85,7 @@ func (f *BigdataPaasMlExperimentFunction) Run(ctx context.Context, req function.
 		"BigData.PaaS.MlExperiment",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		params,
 		deps,
 		nil,

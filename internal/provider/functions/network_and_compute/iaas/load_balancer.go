@@ -35,7 +35,6 @@ func (f *LoadBalancerFunction) Definition(_ context.Context, _ function.Definiti
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"links": types.ListType{
 						ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes},
 					},
@@ -51,7 +50,6 @@ type loadBalancerConfig struct {
 	Id             types.String `tfsdk:"id"`
 	DisplayName    types.String `tfsdk:"display_name"`
 	Description    types.String `tfsdk:"description"`
-	Version        types.String `tfsdk:"version"`
 	Links          types.List   `tfsdk:"links"`
 	SecurityGroups types.List   `tfsdk:"security_groups"`
 }
@@ -101,7 +99,7 @@ func (f *LoadBalancerFunction) Run(ctx context.Context, req function.RunRequest,
 		"NetworkAndCompute.IaaS.LoadBalancer",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		nil,
 		links,

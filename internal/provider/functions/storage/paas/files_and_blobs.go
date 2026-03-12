@@ -34,7 +34,6 @@ func (f *StoragePaasFilesAndBlobsFunction) Definition(_ context.Context, _ funct
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 				},
 			},
 		},
@@ -46,7 +45,6 @@ type storagePaasFilesAndBlobsConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 }
 
 func (f *StoragePaasFilesAndBlobsFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -61,7 +59,7 @@ func (f *StoragePaasFilesAndBlobsFunction) Run(ctx context.Context, req function
 		"Storage.PaaS.FilesAndBlobs",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		nil,
 		nil,

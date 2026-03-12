@@ -35,7 +35,6 @@ func (f *StorageCaasSearchEntityFunction) Definition(_ context.Context, _ functi
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"search":       components.ComponentObjectType,
 				},
 			},
@@ -48,7 +47,6 @@ type storageCaasSearchEntityConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 	Search      types.Object `tfsdk:"search"`
 }
 
@@ -74,7 +72,7 @@ func (f *StorageCaasSearchEntityFunction) Run(ctx context.Context, req function.
 		"Storage.CaaS.SearchEntity",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		deps,
 		nil,

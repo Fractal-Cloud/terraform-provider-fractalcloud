@@ -35,7 +35,6 @@ func (f *MessagingCaasEntityFunction) Definition(_ context.Context, _ function.D
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"version":      types.StringType,
 					"broker":       components.ComponentObjectType,
 				},
 			},
@@ -48,7 +47,6 @@ type messagingCaasEntityConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	Version     types.String `tfsdk:"version"`
 	Broker      types.Object `tfsdk:"broker"`
 }
 
@@ -74,7 +72,7 @@ func (f *MessagingCaasEntityFunction) Run(ctx context.Context, req function.RunR
 		"Messaging.CaaS.Entity",
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
-		components.OptionalString(config.Version),
+		types.StringNull(),
 		nil,
 		deps,
 		nil,
