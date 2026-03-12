@@ -1,6 +1,8 @@
 # Terraform Provider for Fractal Cloud
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Go](https://img.shields.io/badge/Go-1.24+-00ADD8.svg)](https://go.dev/)
+[![Terraform](https://img.shields.io/badge/Terraform-1.1+-7B42BC.svg)](https://www.terraform.io/)
 
 The Terraform Provider for [Fractal Cloud](https://fractal.cloud) enables platform and operations teams to manage Fractal Cloud governance resources through Terraform. It covers organizational structure, bounded contexts, environments, and fractal (blueprint) publication workflows.
 
@@ -8,17 +10,17 @@ Fractal Cloud is a platform engineering solution that delivers secure, compliant
 
 ## Provider Scope
 
-### Supported Resources
+### Resources
 
 | Resource | Description |
 |---|---|
 | `fractalcloud_personal_bounded_context` | Personal bounded contexts (scoped to a user account) |
 | `fractalcloud_organizational_bounded_context` | Organizational bounded contexts (scoped to an organization) |
-| `fractalcloud_fractal` | Fractal definitions (blueprints) — publish, update, and manage component composition |
+| `fractalcloud_fractal` | Fractal definitions (blueprints) -- publish, update, and manage component composition |
 | `fractalcloud_management_environment` | Management environments for governance |
 | `fractalcloud_operational_environment` | Operational environments for runtime governance |
 
-### Supported Data Sources
+### Data Sources
 
 | Data Source | Description |
 |---|---|
@@ -27,11 +29,133 @@ Fractal Cloud is a platform engineering solution that delivers secure, compliant
 | `fractalcloud_organization` | Look up an existing organization |
 | `fractalcloud_fractal` | Look up an existing fractal definition |
 
+### Provider Functions
+
+The provider includes 44 blueprint component builder functions organized by infrastructure domain. These functions create component objects for use in a fractal's `components` list.
+
+<details>
+<summary>NetworkAndCompute (6 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::virtual_network` | Virtual network / VPC |
+| `provider::fractalcloud::subnet` | Subnet within a virtual network |
+| `provider::fractalcloud::load_balancer` | Load balancer |
+| `provider::fractalcloud::security_group` | Security group / firewall rules |
+| `provider::fractalcloud::virtual_machine` | Virtual machine / compute instance |
+| `provider::fractalcloud::container_platform` | Container orchestration platform (e.g. Kubernetes) |
+
+</details>
+
+<details>
+<summary>CustomWorkloads (4 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::workload` | Generic container workload (CaaS) |
+| `provider::fractalcloud::iaas_workload` | IaaS workload |
+| `provider::fractalcloud::paas_workload` | PaaS workload |
+| `provider::fractalcloud::faas_workload` | FaaS / serverless workload |
+
+</details>
+
+<details>
+<summary>Storage (13 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::files_and_blobs` | Object / blob / file storage |
+| `provider::fractalcloud::relational_dbms` | Relational DBMS platform |
+| `provider::fractalcloud::relational_database` | Relational database |
+| `provider::fractalcloud::document_dbms` | Document DBMS platform |
+| `provider::fractalcloud::document_database` | Document database |
+| `provider::fractalcloud::column_oriented_dbms` | Column-oriented DBMS platform |
+| `provider::fractalcloud::column_oriented_entity` | Column-oriented entity |
+| `provider::fractalcloud::key_value_dbms` | Key-value DBMS platform |
+| `provider::fractalcloud::key_value_entity` | Key-value entity |
+| `provider::fractalcloud::graph_dbms` | Graph DBMS platform |
+| `provider::fractalcloud::graph_database` | Graph database |
+| `provider::fractalcloud::search` | Search platform |
+| `provider::fractalcloud::search_entity` | Search entity / index |
+
+</details>
+
+<details>
+<summary>Messaging (4 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::message_broker` | PaaS message broker |
+| `provider::fractalcloud::message_broker_entity` | PaaS message broker entity (topic/queue) |
+| `provider::fractalcloud::caas_message_broker` | CaaS message broker |
+| `provider::fractalcloud::caas_message_broker_entity` | CaaS message broker entity |
+
+</details>
+
+<details>
+<summary>BigData (5 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::distributed_data_processing` | Distributed data processing platform |
+| `provider::fractalcloud::compute_cluster` | Compute cluster |
+| `provider::fractalcloud::data_processing_job` | Data processing job |
+| `provider::fractalcloud::ml_experiment` | ML experiment |
+| `provider::fractalcloud::datalake` | Data lake |
+
+</details>
+
+<details>
+<summary>APIManagement (2 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::caas_api_gateway` | CaaS API gateway |
+| `provider::fractalcloud::paas_api_gateway` | PaaS API gateway |
+
+</details>
+
+<details>
+<summary>Observability (3 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::monitoring` | Monitoring platform |
+| `provider::fractalcloud::tracing` | Distributed tracing |
+| `provider::fractalcloud::logging` | Logging platform |
+
+</details>
+
+<details>
+<summary>Security (1 function)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::service_mesh_security` | Service mesh security |
+
+</details>
+
+<details>
+<summary>External Resources (8 functions)</summary>
+
+| Function | Description |
+|---|---|
+| `provider::fractalcloud::external_network_resource` | External / unmanaged network resource |
+| `provider::fractalcloud::external_workload_resource` | External / unmanaged workload resource |
+| `provider::fractalcloud::external_storage_resource` | External / unmanaged storage resource |
+| `provider::fractalcloud::external_messaging_resource` | External / unmanaged messaging resource |
+| `provider::fractalcloud::external_big_data_resource` | External / unmanaged big data resource |
+| `provider::fractalcloud::external_api_management_resource` | External / unmanaged API management resource |
+| `provider::fractalcloud::external_observability_resource` | External / unmanaged observability resource |
+| `provider::fractalcloud::external_security_resource` | External / unmanaged security resource |
+
+</details>
+
 ### Not in Scope
 
 This provider does **not** manage:
 
-- **Live Systems** — created by development teams via the Fractal SDK or UI
+- **Live Systems** -- created by development teams via the Fractal SDK or UI
 - Application-level deployments or runtime operations
 - CI/CD pipeline-triggered infrastructure instantiation
 
@@ -39,7 +163,7 @@ This provider does **not** manage:
 
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.1
 - [Go](https://golang.org/doc/install) >= 1.24 (to build the provider)
-- A Fractal Cloud account with a service account
+- A [Fractal Cloud](https://fractal.cloud) account with a service account
 
 ## Getting Started
 
@@ -75,7 +199,7 @@ Environment variables are used as defaults and can be overridden by HCL attribut
 |---|---|---|---|
 | `service_account_id` | `FRACTAL_CLOUD_SERVICE_ACCOUNT_ID` | Yes | Service account identifier |
 | `service_account_secret` | `FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET` | Yes | Service account secret |
-| `host` | — | No | API endpoint (defaults to `https://api.fractal.cloud`) |
+| `host` | -- | No | API endpoint (defaults to `https://api.fractal.cloud`) |
 
 ## Usage Examples
 
@@ -93,7 +217,7 @@ resource "fractalcloud_personal_bounded_context" "production" {
 
 ```hcl
 data "fractalcloud_organization" "my_org" {
-  id = "a15f2627-c927-4125-a3a5-7141977135b1"
+  id = "your-organization-id"
 }
 
 resource "fractalcloud_organizational_bounded_context" "platform" {
@@ -104,7 +228,7 @@ resource "fractalcloud_organizational_bounded_context" "platform" {
 }
 ```
 
-### Fractal (Blueprint)
+### Fractal with Blueprint Components
 
 ```hcl
 resource "fractalcloud_fractal" "microservice" {
@@ -112,23 +236,80 @@ resource "fractalcloud_fractal" "microservice" {
   name        = "microservice-template"
   version     = "1.0"
   description = "Standard microservice architecture blueprint"
+
   components = [
-    {
-      id           = "container-platform-1"
-      type         = "NetworkAndCompute.PaaS.ContainerPlatform"
-      display_name = "Container Platform"
-      description  = "Container Platform component"
-      version      = "1.0"
-      parameters   = {}
-    },
-    {
-      id               = "search-cluster-1"
-      type             = "Storage.CaaS.Search"
-      display_name     = "Search Cluster"
-      version          = "1.0"
-      parameters       = {}
-      dependencies_ids = ["container-platform-1"]
-    }
+    provider::fractalcloud::container_platform({
+      id           = "k8s-cluster"
+      display_name = "Kubernetes Cluster"
+    }),
+
+    provider::fractalcloud::workload({
+      id              = "api-service"
+      display_name    = "API Service"
+      container_image = "my-registry/api-service:latest"
+      container_port  = 8080
+      cpu             = "512"
+      memory          = "1024"
+      desired_count   = 2
+      platform_id     = "k8s-cluster"
+    }),
+
+    provider::fractalcloud::relational_dbms({
+      id           = "database-platform"
+      display_name = "Database Platform"
+    }),
+
+    provider::fractalcloud::relational_database({
+      id           = "app-database"
+      display_name = "Application Database"
+      dbms_id      = "database-platform"
+    }),
+  ]
+}
+```
+
+### IaaS Architecture with Dependencies and Links
+
+```hcl
+resource "fractalcloud_fractal" "iaas" {
+  bounded_context_id = fractalcloud_personal_bounded_context.production.id
+  name        = "iaas-architecture"
+  version     = "1.0"
+  description = "IaaS with network, security, and compute"
+
+  components = [
+    provider::fractalcloud::virtual_network({
+      id           = "main-vpc"
+      display_name = "Main VPC"
+      cidr_block   = "10.0.0.0/16"
+    }),
+
+    provider::fractalcloud::subnet({
+      id                = "public-subnet"
+      display_name      = "Public Subnet"
+      cidr_block        = "10.0.1.0/24"
+      availability_zone = "eu-central-1a"
+      vpc_id            = "main-vpc"
+    }),
+
+    provider::fractalcloud::security_group({
+      id          = "web-sg"
+      description = "Allow HTTPS from the internet"
+      vpc_id      = "main-vpc"
+      ingress_rules = [
+        {
+          from_port   = 443
+          source_cidr = "0.0.0.0/0"
+        }
+      ]
+    }),
+
+    provider::fractalcloud::virtual_machine({
+      id              = "web-server"
+      display_name    = "Web Server"
+      subnet_id       = "public-subnet"
+      security_groups = ["web-sg"]
+    }),
   ]
 }
 ```
@@ -188,23 +369,12 @@ make testacc
 
 ## Contributing
 
-Contributions are welcome. Please follow these steps:
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to get started.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Make your changes
-4. Run `make fmt` and `make lint` before committing
-5. Write or update tests as appropriate
-6. Open a pull request with a clear description of the change
+## Security
 
-Please open an issue before submitting non-trivial pull requests to discuss the approach.
-
-### Development Requirements
-
-- Go 1.24+
-- [golangci-lint](https://golangci-lint.run/) for linting
-- Terraform 1.1+ for acceptance testing
+To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 -- see the [LICENSE](LICENSE) file for details.
