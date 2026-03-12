@@ -5,6 +5,29 @@ import (
 	"os"
 
 	"fractal.cloud/terraform-provider-fc/internal/client"
+	api_caas "fractal.cloud/terraform-provider-fc/internal/provider/functions/api_management/caas"
+	api_paas "fractal.cloud/terraform-provider-fc/internal/provider/functions/api_management/paas"
+	api_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/api_management/saas"
+	bd_paas "fractal.cloud/terraform-provider-fc/internal/provider/functions/bigdata/paas"
+	bd_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/bigdata/saas"
+	cw_caas "fractal.cloud/terraform-provider-fc/internal/provider/functions/custom_workloads/caas"
+	cw_faas "fractal.cloud/terraform-provider-fc/internal/provider/functions/custom_workloads/faas"
+	cw_iaas "fractal.cloud/terraform-provider-fc/internal/provider/functions/custom_workloads/iaas"
+	cw_paas "fractal.cloud/terraform-provider-fc/internal/provider/functions/custom_workloads/paas"
+	cw_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/custom_workloads/saas"
+	msg_caas "fractal.cloud/terraform-provider-fc/internal/provider/functions/messaging/caas"
+	msg_paas "fractal.cloud/terraform-provider-fc/internal/provider/functions/messaging/paas"
+	msg_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/messaging/saas"
+	nc_iaas "fractal.cloud/terraform-provider-fc/internal/provider/functions/network_and_compute/iaas"
+	nc_paas "fractal.cloud/terraform-provider-fc/internal/provider/functions/network_and_compute/paas"
+	nc_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/network_and_compute/saas"
+	obs_caas "fractal.cloud/terraform-provider-fc/internal/provider/functions/observability/caas"
+	obs_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/observability/saas"
+	sec_caas "fractal.cloud/terraform-provider-fc/internal/provider/functions/security/caas"
+	sec_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/security/saas"
+	st_caas "fractal.cloud/terraform-provider-fc/internal/provider/functions/storage/caas"
+	st_paas "fractal.cloud/terraform-provider-fc/internal/provider/functions/storage/paas"
+	st_saas "fractal.cloud/terraform-provider-fc/internal/provider/functions/storage/saas"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -172,67 +195,65 @@ func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Re
 func (p *fractalCloudProvider) Functions(_ context.Context) []func() function.Function {
 	return []func() function.Function{
 		// NetworkAndCompute
-		NewVirtualNetworkFunction,
-		NewSubnetFunction,
-		NewLoadBalancerFunction,
-		NewSecurityGroupFunction,
-		NewVirtualMachineFunction,
-		NewContainerPlatformFunction,
+		nc_iaas.NewVirtualNetworkFunction,
+		nc_iaas.NewSubnetFunction,
+		nc_iaas.NewLoadBalancerFunction,
+		nc_iaas.NewSecurityGroupFunction,
+		nc_iaas.NewVirtualMachineFunction,
+		nc_paas.NewContainerPlatformFunction,
+		nc_saas.NewUnmanagedFunction,
 
 		// CustomWorkloads
-		NewWorkloadFunction,
-		NewIaaSWorkloadFunction,
-		NewPaaSWorkloadFunction,
-		NewFaaSWorkloadFunction,
+		cw_caas.NewWorkloadFunction,
+		cw_iaas.NewWorkloadFunction,
+		cw_paas.NewWorkloadFunction,
+		cw_faas.NewWorkloadFunction,
+		cw_saas.NewUnmanagedFunction,
 
 		// Storage
-		NewFilesAndBlobsFunction,
-		NewRelationalDbmsFunction,
-		NewRelationalDatabaseFunction,
-		NewDocumentDbmsFunction,
-		NewDocumentDatabaseFunction,
-		NewColumnOrientedDbmsFunction,
-		NewColumnOrientedEntityFunction,
-		NewKeyValueDbmsFunction,
-		NewKeyValueEntityFunction,
-		NewGraphDbmsFunction,
-		NewGraphDatabaseFunction,
-		NewSearchFunction,
-		NewSearchEntityFunction,
+		st_paas.NewStoragePaasFilesAndBlobsFunction,
+		st_paas.NewStoragePaasRelationalDbmsFunction,
+		st_paas.NewStoragePaasRelationalDatabaseFunction,
+		st_paas.NewStoragePaasDocumentDbmsFunction,
+		st_paas.NewStoragePaasDocumentDatabaseFunction,
+		st_paas.NewStoragePaasColumnOrientedDbmsFunction,
+		st_paas.NewStoragePaasColumnOrientedEntityFunction,
+		st_paas.NewStoragePaasKeyValueDbmsFunction,
+		st_paas.NewStoragePaasKeyValueEntityFunction,
+		st_paas.NewStoragePaasGraphDbmsFunction,
+		st_paas.NewStoragePaasGraphDatabaseFunction,
+		st_caas.NewStorageCaasSearchFunction,
+		st_caas.NewStorageCaasSearchEntityFunction,
+		st_saas.NewStorageSaasUnmanagedFunction,
 
 		// Messaging
-		NewMessageBrokerFunction,
-		NewMessageBrokerEntityFunction,
-		NewCaaSMessageBrokerFunction,
-		NewCaaSMessageBrokerEntityFunction,
+		msg_paas.NewMessagingPaasBrokerFunction,
+		msg_paas.NewMessagingPaasEntityFunction,
+		msg_caas.NewMessagingCaasBrokerFunction,
+		msg_caas.NewMessagingCaasEntityFunction,
+		msg_saas.NewMessagingSaasUnmanagedFunction,
 
 		// BigData
-		NewDistributedDataProcessingFunction,
-		NewComputeClusterFunction,
-		NewDataProcessingJobFunction,
-		NewMlExperimentFunction,
-		NewDatalakeFunction,
+		bd_paas.NewBigdataPaasDistributedDataProcessingFunction,
+		bd_paas.NewBigdataPaasComputeClusterFunction,
+		bd_paas.NewBigdataPaasDataProcessingJobFunction,
+		bd_paas.NewBigdataPaasMlExperimentFunction,
+		bd_paas.NewBigdataPaasDatalakeFunction,
+		bd_saas.NewBigdataSaasUnmanagedFunction,
 
 		// APIManagement
-		NewCaaSAPIGatewayFunction,
-		NewPaaSAPIGatewayFunction,
+		api_paas.NewPaaSAPIGatewayFunction,
+		api_caas.NewCaaSAPIGatewayFunction,
+		api_saas.NewSaaSUnmanagedFunction,
 
 		// Observability
-		NewMonitoringFunction,
-		NewTracingFunction,
-		NewLoggingFunction,
+		obs_caas.NewCaaSMonitoringFunction,
+		obs_caas.NewCaaSTracingFunction,
+		obs_caas.NewCaaSLoggingFunction,
+		obs_saas.NewSaaSUnmanagedFunction,
 
 		// Security
-		NewServiceMeshSecurityFunction,
-
-		// External Resources (SaaS Unmanaged)
-		NewExternalNetworkResourceFunction,
-		NewExternalWorkloadResourceFunction,
-		NewExternalStorageResourceFunction,
-		NewExternalMessagingResourceFunction,
-		NewExternalBigDataResourceFunction,
-		NewExternalAPIManagementResourceFunction,
-		NewExternalObservabilityResourceFunction,
-		NewExternalSecurityResourceFunction,
+		sec_caas.NewCaaSServiceMeshSecurityFunction,
+		sec_saas.NewSaaSUnmanagedFunction,
 	}
 }

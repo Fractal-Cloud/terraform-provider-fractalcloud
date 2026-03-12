@@ -1,0 +1,33 @@
+package paas
+
+import (
+	"context"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/function"
+)
+
+// --- Workload ---
+
+func TestWorkloadFunction_Metadata(t *testing.T) {
+	f := NewWorkloadFunction()
+	req := function.MetadataRequest{}
+	resp := &function.MetadataResponse{}
+	f.Metadata(context.Background(), req, resp)
+	if resp.Name != "custom_workloads_paas_workload" {
+		t.Errorf("expected name %q, got %q", "custom_workloads_paas_workload", resp.Name)
+	}
+}
+
+func TestWorkloadFunction_Definition(t *testing.T) {
+	f := NewWorkloadFunction()
+	req := function.DefinitionRequest{}
+	resp := &function.DefinitionResponse{}
+	f.Definition(context.Background(), req, resp)
+	if len(resp.Definition.Parameters) != 1 {
+		t.Errorf("expected 1 parameter, got %d", len(resp.Definition.Parameters))
+	}
+	if resp.Definition.Return == nil {
+		t.Error("expected non-nil return type")
+	}
+}

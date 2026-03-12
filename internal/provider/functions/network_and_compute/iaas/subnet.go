@@ -1,0 +1,99 @@
+package iaas
+
+import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"fractal.cloud/terraform-provider-fc/internal/provider/components"
+)
+
+var _ function.Function = &SubnetFunction{}
+
+type SubnetFunction struct{}
+
+func NewSubnetFunction() function.Function {
+	return &SubnetFunction{}
+}
+
+func (f *SubnetFunction) Metadata(_ context.Context, _ function.MetadataRequest, resp *function.MetadataResponse) {
+	resp.Name = "network_and_compute_iaas_subnet"
+}
+
+func (f *SubnetFunction) Definition(_ context.Context, _ function.DefinitionRequest, resp *function.DefinitionResponse) {
+	resp.Definition = function.Definition{
+		Summary:     "Creates a Subnet blueprint component",
+		Description: "Builds a Subnet component with the correct type and parameters for use in a fractal's components list. If vpc is provided, it is validated as a VirtualNetwork and automatically added as a dependency.",
+		Parameters: []function.Parameter{
+			function.ObjectParameter{
+				Name:        "config",
+				Description: "Subnet configuration",
+				AttributeTypes: map[string]attr.Type{
+					"id":                types.StringType,
+					"display_name":      types.StringType,
+					"description":       types.StringType,
+					"version":           types.StringType,
+					"cidr_block":        types.StringType,
+					"availability_zone": types.StringType,
+					"vpc":               components.ComponentObjectType,
+				},
+			},
+		},
+		Return: components.ComponentReturn(),
+	}
+}
+
+type subnetConfig struct {
+	Id               types.String `tfsdk:"id"`
+	DisplayName      types.String `tfsdk:"display_name"`
+	Description      types.String `tfsdk:"description"`
+	Version          types.String `tfsdk:"version"`
+	CidrBlock        types.String `tfsdk:"cidr_block"`
+	AvailabilityZone types.String `tfsdk:"availability_zone"`
+	Vpc              types.Object `tfsdk:"vpc"`
+}
+
+func (f *SubnetFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
+	var config subnetConfig
+	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &config))
+	if resp.Error != nil {
+		return
+	}
+
+	params := map[string]string{}
+	if !config.CidrBlock.IsNull() && !config.CidrBlock.IsUnknown() {
+		params["cidrBlock"] = config.CidrBlock.ValueString()
+	}
+	if !config.AvailabilityZone.IsNull() && !config.AvailabilityZone.IsUnknown() {
+		params["availabilityZone"] = config.AvailabilityZone.ValueString()
+	}
+
+	var deps []string
+	vpcId, funcErr := components.ExtractDependency(config.Vpc, "NetworkAndCompute.IaaS.VirtualNetwork")
+	if funcErr != nil {
+		resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
+		return
+	}
+	if vpcId != "" {
+		deps = append(deps, vpcId)
+	}
+
+	result, funcErr := components.BuildComponent(
+		config.Id.ValueString(),
+		"NetworkAndCompute.IaaS.Subnet",
+		components.OptionalString(config.DisplayName),
+		components.OptionalString(config.Description),
+		components.OptionalString(config.Version),
+		params,
+		deps,
+		nil,
+	)
+	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
+	if resp.Error != nil {
+		return
+	}
+
+	resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, result))
+}
