@@ -171,11 +171,68 @@ func (p *fractalCloudProvider) Resources(_ context.Context) []func() resource.Re
 // Functions defines the provider functions for building blueprint components.
 func (p *fractalCloudProvider) Functions(_ context.Context) []func() function.Function {
 	return []func() function.Function{
+		// NetworkAndCompute
 		NewVirtualNetworkFunction,
 		NewSubnetFunction,
+		NewLoadBalancerFunction,
 		NewSecurityGroupFunction,
 		NewVirtualMachineFunction,
 		NewContainerPlatformFunction,
+
+		// CustomWorkloads
 		NewWorkloadFunction,
+		NewIaaSWorkloadFunction,
+		NewPaaSWorkloadFunction,
+		NewFaaSWorkloadFunction,
+
+		// Storage
+		NewFilesAndBlobsFunction,
+		NewRelationalDbmsFunction,
+		NewRelationalDatabaseFunction,
+		NewDocumentDbmsFunction,
+		NewDocumentDatabaseFunction,
+		NewColumnOrientedDbmsFunction,
+		NewColumnOrientedEntityFunction,
+		NewKeyValueDbmsFunction,
+		NewKeyValueEntityFunction,
+		NewGraphDbmsFunction,
+		NewGraphDatabaseFunction,
+		NewSearchFunction,
+		NewSearchEntityFunction,
+
+		// Messaging
+		NewMessageBrokerFunction,
+		NewMessageBrokerEntityFunction,
+		NewCaaSMessageBrokerFunction,
+		NewCaaSMessageBrokerEntityFunction,
+
+		// BigData
+		NewDistributedDataProcessingFunction,
+		NewComputeClusterFunction,
+		NewDataProcessingJobFunction,
+		NewMlExperimentFunction,
+		NewDatalakeFunction,
+
+		// APIManagement
+		NewCaaSAPIGatewayFunction,
+		NewPaaSAPIGatewayFunction,
+
+		// Observability
+		NewMonitoringFunction,
+		NewTracingFunction,
+		NewLoggingFunction,
+
+		// Security
+		NewServiceMeshSecurityFunction,
+
+		// External Resources (SaaS Unmanaged)
+		NewExternalNetworkResourceFunction,
+		NewExternalWorkloadResourceFunction,
+		NewExternalStorageResourceFunction,
+		NewExternalMessagingResourceFunction,
+		NewExternalBigDataResourceFunction,
+		NewExternalAPIManagementResourceFunction,
+		NewExternalObservabilityResourceFunction,
+		NewExternalSecurityResourceFunction,
 	}
 }
