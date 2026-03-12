@@ -26,7 +26,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 3. Add the upstream remote:
    ```sh
-   git remote add upstream https://github.com/FractalCloud/terraform-provider.git
+   git remote add upstream https://github.com/Fractal-Cloud/terraform-provider-fractalcloud.git
    ```
 
 4. Install dependencies:
@@ -63,7 +63,7 @@ make install
 
 ### Reporting Bugs
 
-Before creating a bug report, please search [existing issues](https://github.com/FractalCloud/terraform-provider/issues) to avoid duplicates. When filing a bug report, use the **Bug Report** issue template and include:
+Before creating a bug report, please search [existing issues](https://github.com/Fractal-Cloud/terraform-provider-fractalcloud/issues) to avoid duplicates. When filing a bug report, use the **Bug Report** issue template and include:
 
 - Terraform version (`terraform version`)
 - Provider version

@@ -343,8 +343,8 @@ See the [`examples/`](examples/) directory for complete working configurations.
 ## Building the Provider
 
 ```sh
-git clone https://github.com/FractalCloud/terraform-provider.git
-cd terraform-provider
+git clone https://github.com/Fractal-Cloud/terraform-provider-fractalcloud.git
+cd terraform-provider-fractalcloud
 make build
 ```
 
