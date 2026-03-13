@@ -36,8 +36,7 @@ func (f *BigdataPaasMlExperimentFunction) Definition(_ context.Context, _ functi
 					"display_name":      types.StringType,
 					"description":       types.StringType,
 					"platform":          components.ComponentObjectType,
-					"experiment_name":   types.StringType,
-					"artifact_location": types.StringType,
+					"experiment_name": types.StringType,
 				},
 			},
 		},
@@ -50,8 +49,7 @@ type bigdataPaasMlExperimentConfig struct {
 	DisplayName      types.String `tfsdk:"display_name"`
 	Description      types.String `tfsdk:"description"`
 	Platform         types.Object `tfsdk:"platform"`
-	ExperimentName   types.String `tfsdk:"experiment_name"`
-	ArtifactLocation types.String `tfsdk:"artifact_location"`
+	ExperimentName types.String `tfsdk:"experiment_name"`
 }
 
 func (f *BigdataPaasMlExperimentFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -65,9 +63,6 @@ func (f *BigdataPaasMlExperimentFunction) Run(ctx context.Context, req function.
 
 	if !config.ExperimentName.IsNull() && !config.ExperimentName.IsUnknown() {
 		params["experimentName"] = config.ExperimentName.ValueString()
-	}
-	if !config.ArtifactLocation.IsNull() && !config.ArtifactLocation.IsUnknown() {
-		params["artifactLocation"] = config.ArtifactLocation.ValueString()
 	}
 
 	var deps []string

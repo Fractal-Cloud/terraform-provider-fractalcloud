@@ -1,0 +1,41 @@
+---
+page_title: "storage_paas_graph_database Function - Fractal Cloud"
+subcategory: ""
+description: |-
+  Creates a Graph Database component.
+---
+
+# function: storage_paas_graph_database
+
+Creates a Graph Database component. If `dbms` is provided, it is added as a dependency to ensure the DBMS is provisioned before the database.
+
+## Example Usage
+
+```terraform
+locals {
+  graph_dbms = provider::fc::storage_paas_graph_dbms({
+    id = "graph-dbms"
+  })
+
+  graph_db = provider::fc::storage_paas_graph_database({
+    id           = "graph-db"
+    display_name = "Social Graph"
+    dbms         = local.graph_dbms
+  })
+}
+```
+
+## Signature
+
+```text
+storage_paas_graph_database(config object) object
+```
+
+## Arguments
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `id` | String | Yes | Unique identifier for the component within the blueprint. |
+| `display_name` | String | No | Human-readable name for the component. |
+| `description` | String | No | Description of the component's purpose. |
+| `dbms` | Component Object | No | The Graph DBMS component to depend on. If provided, added as a dependency. |

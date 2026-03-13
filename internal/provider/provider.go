@@ -70,11 +70,10 @@ type fractalCloudProviderModel struct {
 
 // Metadata returns the provider type name.
 func (p *fractalCloudProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "fractalcloud"
+	resp.TypeName = "fc"
 	resp.Version = p.version
 }
 
-// Schema defines the provider-level schema for configuration data.
 // Schema defines the provider-level schema for configuration data.
 func (p *fractalCloudProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -97,10 +96,6 @@ func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.Confi
 	var config fractalCloudProviderModel
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -136,10 +131,10 @@ func (p *fractalCloudProvider) Configure(ctx context.Context, req provider.Confi
 
 	if serviceAccountSecret == "" {
 		resp.Diagnostics.AddAttributeError(
-			path.Root("password"),
-			"Missing Fractal Cloud API Password",
-			"The provider cannot create the Fractal Cloud API client as there is a missing or empty value for the Fractal Cloud API password. "+
-				"Set the password value in the configuration or use the Fractal FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET environment variable. "+
+			path.Root("service_account_secret"),
+			"Missing Fractal Cloud API Service Account Secret",
+			"The provider cannot create the Fractal Cloud API client as there is a missing or empty value for the Fractal Cloud API Service Account Secret. "+
+				"Set the service_account_secret value in the configuration or use the FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET environment variable. "+
 				"If either is already set, ensure the value is not empty.",
 		)
 	}

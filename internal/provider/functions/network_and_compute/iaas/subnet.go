@@ -31,12 +31,11 @@ func (f *SubnetFunction) Definition(_ context.Context, _ function.DefinitionRequ
 				Name:        "config",
 				Description: "Subnet configuration",
 				AttributeTypes: map[string]attr.Type{
-					"id":                types.StringType,
-					"display_name":      types.StringType,
-					"description":       types.StringType,
-					"cidr_block":        types.StringType,
-					"availability_zone": types.StringType,
-					"vpc":               components.ComponentObjectType,
+					"id":           types.StringType,
+					"display_name": types.StringType,
+					"description":  types.StringType,
+					"cidr_block":   types.StringType,
+					"vpc":          components.ComponentObjectType,
 				},
 			},
 		},
@@ -45,12 +44,11 @@ func (f *SubnetFunction) Definition(_ context.Context, _ function.DefinitionRequ
 }
 
 type subnetConfig struct {
-	Id               types.String `tfsdk:"id"`
-	DisplayName      types.String `tfsdk:"display_name"`
-	Description      types.String `tfsdk:"description"`
-	CidrBlock        types.String `tfsdk:"cidr_block"`
-	AvailabilityZone types.String `tfsdk:"availability_zone"`
-	Vpc              types.Object `tfsdk:"vpc"`
+	Id          types.String `tfsdk:"id"`
+	DisplayName types.String `tfsdk:"display_name"`
+	Description types.String `tfsdk:"description"`
+	CidrBlock   types.String `tfsdk:"cidr_block"`
+	Vpc         types.Object `tfsdk:"vpc"`
 }
 
 func (f *SubnetFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -63,9 +61,6 @@ func (f *SubnetFunction) Run(ctx context.Context, req function.RunRequest, resp 
 	params := map[string]string{}
 	if !config.CidrBlock.IsNull() && !config.CidrBlock.IsUnknown() {
 		params["cidrBlock"] = config.CidrBlock.ValueString()
-	}
-	if !config.AvailabilityZone.IsNull() && !config.AvailabilityZone.IsUnknown() {
-		params["availabilityZone"] = config.AvailabilityZone.ValueString()
 	}
 
 	var deps []string

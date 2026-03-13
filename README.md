@@ -16,37 +16,37 @@ Fractal Cloud is a platform engineering solution that delivers secure, compliant
 
 | Resource | Description |
 |---|---|
-| `fractalcloud_personal_bounded_context` | Personal bounded contexts (scoped to a user account) |
-| `fractalcloud_organizational_bounded_context` | Organizational bounded contexts (scoped to an organization) |
-| `fractalcloud_fractal` | Fractal definitions (blueprints) -- publish, update, and manage component composition |
-| `fractalcloud_management_environment` | Management environments for governance |
-| `fractalcloud_operational_environment` | Operational environments for runtime governance |
+| `fc_personal_bounded_context` | Personal bounded contexts (scoped to a user account) |
+| `fc_organizational_bounded_context` | Organizational bounded contexts (scoped to an organization) |
+| `fc_fractal` | Fractal definitions (blueprints) -- publish, update, and manage component composition |
+| `fc_management_environment` | Management environments for governance |
+| `fc_operational_environment` | Operational environments for runtime governance |
 
 ### Data Sources
 
 | Data Source | Description |
 |---|---|
-| `fractalcloud_personal_bounded_context` | Look up an existing personal bounded context |
-| `fractalcloud_organizational_bounded_context` | Look up an existing organizational bounded context |
-| `fractalcloud_organization` | Look up an existing organization |
-| `fractalcloud_fractal` | Look up an existing fractal definition |
+| `fc_personal_bounded_context` | Look up an existing personal bounded context |
+| `fc_organizational_bounded_context` | Look up an existing organizational bounded context |
+| `fc_organization` | Look up an existing organization |
+| `fc_fractal` | Look up an existing fractal definition |
 
 ### Provider Functions
 
-The provider includes 46 blueprint component builder functions organized by infrastructure domain and delivery model. Function names follow the full component coordinate: `provider::fractalcloud::{domain}_{delivery_model}_{component}`. These functions create component objects for use in a fractal's `components` list. Dependencies between components are expressed as direct object references (type-checked at plan time) rather than string IDs.
+The provider includes 46 blueprint component builder functions organized by infrastructure domain and delivery model. Function names follow the full component coordinate: `provider::fc::{domain}_{delivery_model}_{component}`. These functions create component objects for use in a fractal's `components` list. Dependencies between components are expressed as direct object references (type-checked at plan time) rather than string IDs.
 
 <details>
 <summary>NetworkAndCompute (7 functions)</summary>
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::network_and_compute_iaas_virtual_network` | Virtual network / VPC |
-| `provider::fractalcloud::network_and_compute_iaas_subnet` | Subnet within a virtual network |
-| `provider::fractalcloud::network_and_compute_iaas_load_balancer` | Load balancer |
-| `provider::fractalcloud::network_and_compute_iaas_security_group` | Security group / firewall rules |
-| `provider::fractalcloud::network_and_compute_iaas_virtual_machine` | Virtual machine / compute instance |
-| `provider::fractalcloud::network_and_compute_paas_container_platform` | Container orchestration platform (e.g. Kubernetes) |
-| `provider::fractalcloud::network_and_compute_saas_unmanaged` | External / unmanaged network resource |
+| `provider::fc::network_and_compute_iaas_virtual_network` | Virtual network / VPC |
+| `provider::fc::network_and_compute_iaas_subnet` | Subnet within a virtual network |
+| `provider::fc::network_and_compute_iaas_load_balancer` | Load balancer |
+| `provider::fc::network_and_compute_iaas_security_group` | Security group / firewall rules |
+| `provider::fc::network_and_compute_iaas_virtual_machine` | Virtual machine / compute instance |
+| `provider::fc::network_and_compute_paas_container_platform` | Container orchestration platform (e.g. Kubernetes) |
+| `provider::fc::network_and_compute_saas_unmanaged` | External / unmanaged network resource |
 
 </details>
 
@@ -55,11 +55,11 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::custom_workloads_caas_workload` | Generic container workload (CaaS) |
-| `provider::fractalcloud::custom_workloads_iaas_workload` | IaaS workload |
-| `provider::fractalcloud::custom_workloads_paas_workload` | PaaS workload |
-| `provider::fractalcloud::custom_workloads_faas_workload` | FaaS / serverless workload |
-| `provider::fractalcloud::custom_workloads_saas_unmanaged` | External / unmanaged workload resource |
+| `provider::fc::custom_workloads_caas_workload` | Generic container workload (CaaS) |
+| `provider::fc::custom_workloads_iaas_workload` | IaaS workload |
+| `provider::fc::custom_workloads_paas_workload` | PaaS workload |
+| `provider::fc::custom_workloads_faas_workload` | FaaS / serverless workload |
+| `provider::fc::custom_workloads_saas_unmanaged` | External / unmanaged workload resource |
 
 </details>
 
@@ -68,20 +68,20 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::storage_paas_files_and_blobs` | Object / blob / file storage |
-| `provider::fractalcloud::storage_paas_relational_dbms` | Relational DBMS platform |
-| `provider::fractalcloud::storage_paas_relational_database` | Relational database |
-| `provider::fractalcloud::storage_paas_document_dbms` | Document DBMS platform |
-| `provider::fractalcloud::storage_paas_document_database` | Document database |
-| `provider::fractalcloud::storage_paas_column_oriented_dbms` | Column-oriented DBMS platform |
-| `provider::fractalcloud::storage_paas_column_oriented_entity` | Column-oriented entity |
-| `provider::fractalcloud::storage_paas_key_value_dbms` | Key-value DBMS platform |
-| `provider::fractalcloud::storage_paas_key_value_entity` | Key-value entity |
-| `provider::fractalcloud::storage_paas_graph_dbms` | Graph DBMS platform |
-| `provider::fractalcloud::storage_paas_graph_database` | Graph database |
-| `provider::fractalcloud::storage_caas_search` | Search platform |
-| `provider::fractalcloud::storage_caas_search_entity` | Search entity / index |
-| `provider::fractalcloud::storage_saas_unmanaged` | External / unmanaged storage resource |
+| `provider::fc::storage_paas_files_and_blobs` | Object / blob / file storage |
+| `provider::fc::storage_paas_relational_dbms` | Relational DBMS platform |
+| `provider::fc::storage_paas_relational_database` | Relational database |
+| `provider::fc::storage_paas_document_dbms` | Document DBMS platform |
+| `provider::fc::storage_paas_document_database` | Document database |
+| `provider::fc::storage_paas_column_oriented_dbms` | Column-oriented DBMS platform |
+| `provider::fc::storage_paas_column_oriented_entity` | Column-oriented entity |
+| `provider::fc::storage_paas_key_value_dbms` | Key-value DBMS platform |
+| `provider::fc::storage_paas_key_value_entity` | Key-value entity |
+| `provider::fc::storage_paas_graph_dbms` | Graph DBMS platform |
+| `provider::fc::storage_paas_graph_database` | Graph database |
+| `provider::fc::storage_caas_search` | Search platform |
+| `provider::fc::storage_caas_search_entity` | Search entity / index |
+| `provider::fc::storage_saas_unmanaged` | External / unmanaged storage resource |
 
 </details>
 
@@ -90,11 +90,11 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::messaging_paas_broker` | PaaS message broker |
-| `provider::fractalcloud::messaging_paas_entity` | PaaS message broker entity (topic/queue) |
-| `provider::fractalcloud::messaging_caas_broker` | CaaS message broker |
-| `provider::fractalcloud::messaging_caas_entity` | CaaS message broker entity |
-| `provider::fractalcloud::messaging_saas_unmanaged` | External / unmanaged messaging resource |
+| `provider::fc::messaging_paas_broker` | PaaS message broker |
+| `provider::fc::messaging_paas_entity` | PaaS message broker entity (topic/queue) |
+| `provider::fc::messaging_caas_broker` | CaaS message broker |
+| `provider::fc::messaging_caas_entity` | CaaS message broker entity |
+| `provider::fc::messaging_saas_unmanaged` | External / unmanaged messaging resource |
 
 </details>
 
@@ -103,12 +103,12 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::bigdata_paas_distributed_data_processing` | Distributed data processing platform |
-| `provider::fractalcloud::bigdata_paas_compute_cluster` | Compute cluster |
-| `provider::fractalcloud::bigdata_paas_data_processing_job` | Data processing job |
-| `provider::fractalcloud::bigdata_paas_ml_experiment` | ML experiment |
-| `provider::fractalcloud::bigdata_paas_datalake` | Data lake |
-| `provider::fractalcloud::bigdata_saas_unmanaged` | External / unmanaged big data resource |
+| `provider::fc::bigdata_paas_distributed_data_processing` | Distributed data processing platform |
+| `provider::fc::bigdata_paas_compute_cluster` | Compute cluster |
+| `provider::fc::bigdata_paas_data_processing_job` | Data processing job |
+| `provider::fc::bigdata_paas_ml_experiment` | ML experiment |
+| `provider::fc::bigdata_paas_datalake` | Data lake |
+| `provider::fc::bigdata_saas_unmanaged` | External / unmanaged big data resource |
 
 </details>
 
@@ -117,9 +117,9 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::api_management_paas_api_gateway` | PaaS API gateway |
-| `provider::fractalcloud::api_management_caas_api_gateway` | CaaS API gateway |
-| `provider::fractalcloud::api_management_saas_unmanaged` | External / unmanaged API management resource |
+| `provider::fc::api_management_paas_api_gateway` | PaaS API gateway |
+| `provider::fc::api_management_caas_api_gateway` | CaaS API gateway |
+| `provider::fc::api_management_saas_unmanaged` | External / unmanaged API management resource |
 
 </details>
 
@@ -128,10 +128,10 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::observability_caas_monitoring` | Monitoring platform |
-| `provider::fractalcloud::observability_caas_tracing` | Distributed tracing |
-| `provider::fractalcloud::observability_caas_logging` | Logging platform |
-| `provider::fractalcloud::observability_saas_unmanaged` | External / unmanaged observability resource |
+| `provider::fc::observability_caas_monitoring` | Monitoring platform |
+| `provider::fc::observability_caas_tracing` | Distributed tracing |
+| `provider::fc::observability_caas_logging` | Logging platform |
+| `provider::fc::observability_saas_unmanaged` | External / unmanaged observability resource |
 
 </details>
 
@@ -140,8 +140,8 @@ The provider includes 46 blueprint component builder functions organized by infr
 
 | Function | Description |
 |---|---|
-| `provider::fractalcloud::security_caas_service_mesh_security` | Service mesh security |
-| `provider::fractalcloud::security_saas_unmanaged` | External / unmanaged security resource |
+| `provider::fc::security_caas_service_mesh_security` | Service mesh security |
+| `provider::fc::security_saas_unmanaged` | External / unmanaged security resource |
 
 </details>
 
@@ -166,7 +166,7 @@ This provider does **not** manage:
 ```hcl
 terraform {
   required_providers {
-    fractalcloud = {
+    fc = {
       source  = "registry.terraform.io/fractalcloud/fc"
       version = "~> 0.1.0"
     }
@@ -174,7 +174,7 @@ terraform {
   required_version = ">= 1.1.0"
 }
 
-provider "fractalcloud" {
+provider "fc" {
   service_account_id     = var.fc_service_account_id
   service_account_secret = var.fc_service_account_secret
 }
@@ -200,7 +200,7 @@ Environment variables are used as defaults and can be overridden by HCL attribut
 ### Personal Bounded Context
 
 ```hcl
-resource "fractalcloud_personal_bounded_context" "production" {
+resource "fc_personal_bounded_context" "production" {
   short_name   = "production"
   display_name = "Production"
   description  = "Production bounded context"
@@ -210,13 +210,13 @@ resource "fractalcloud_personal_bounded_context" "production" {
 ### Organizational Bounded Context
 
 ```hcl
-data "fractalcloud_organization" "my_org" {
+data "fc_organization" "my_org" {
   id = "your-organization-id"
 }
 
-resource "fractalcloud_organizational_bounded_context" "platform" {
+resource "fc_organizational_bounded_context" "platform" {
   short_name      = "platform"
-  organization_id = data.fractalcloud_organization.my_org.id
+  organization_id = data.fc_organization.my_org.id
   display_name    = "Platform"
   description     = "Shared platform bounded context"
 }
@@ -228,23 +228,23 @@ Components are defined as locals so that dependencies are expressed via direct o
 
 ```hcl
 locals {
-  k8s_cluster = provider::fractalcloud::network_and_compute_paas_container_platform({
+  k8s_cluster = provider::fc::network_and_compute_paas_container_platform({
     id           = "k8s-cluster"
     display_name = "Kubernetes Cluster"
   })
 
-  db_platform = provider::fractalcloud::storage_paas_relational_dbms({
+  db_platform = provider::fc::storage_paas_relational_dbms({
     id           = "database-platform"
     display_name = "Database Platform"
   })
 
-  app_database = provider::fractalcloud::storage_paas_relational_database({
+  app_database = provider::fc::storage_paas_relational_database({
     id           = "app-database"
     display_name = "Application Database"
     dbms         = local.db_platform     # type-checked reference
   })
 
-  api_service = provider::fractalcloud::custom_workloads_caas_workload({
+  api_service = provider::fc::custom_workloads_caas_workload({
     id              = "api-service"
     display_name    = "API Service"
     container_image = "my-registry/api-service:latest"
@@ -256,8 +256,8 @@ locals {
   })
 }
 
-resource "fractalcloud_fractal" "microservice" {
-  bounded_context_id = fractalcloud_personal_bounded_context.production.id
+resource "fc_fractal" "microservice" {
+  bounded_context_id = fc_personal_bounded_context.production.id
   name        = "microservice-template"
   version     = "1.0"
   description = "Standard microservice architecture blueprint"
@@ -275,21 +275,20 @@ resource "fractalcloud_fractal" "microservice" {
 
 ```hcl
 locals {
-  main_vpc = provider::fractalcloud::network_and_compute_iaas_virtual_network({
+  main_vpc = provider::fc::network_and_compute_iaas_virtual_network({
     id           = "main-vpc"
     display_name = "Main VPC"
     cidr_block   = "10.0.0.0/16"
   })
 
-  public_subnet = provider::fractalcloud::network_and_compute_iaas_subnet({
+  public_subnet = provider::fc::network_and_compute_iaas_subnet({
     id                = "public-subnet"
     display_name      = "Public Subnet"
     cidr_block        = "10.0.1.0/24"
-    availability_zone = "eu-central-1a"
     vpc               = local.main_vpc   # type-checked dependency
   })
 
-  web_sg = provider::fractalcloud::network_and_compute_iaas_security_group({
+  web_sg = provider::fc::network_and_compute_iaas_security_group({
     id          = "web-sg"
     description = "Allow HTTPS from the internet"
     vpc         = local.main_vpc         # type-checked dependency
@@ -301,7 +300,7 @@ locals {
     ]
   })
 
-  web_server = provider::fractalcloud::network_and_compute_iaas_virtual_machine({
+  web_server = provider::fc::network_and_compute_iaas_virtual_machine({
     id              = "web-server"
     display_name    = "Web Server"
     subnet          = local.public_subnet   # type-checked dependency
@@ -309,8 +308,8 @@ locals {
   })
 }
 
-resource "fractalcloud_fractal" "iaas" {
-  bounded_context_id = fractalcloud_personal_bounded_context.production.id
+resource "fc_fractal" "iaas" {
+  bounded_context_id = fc_personal_bounded_context.production.id
   name        = "iaas-architecture"
   version     = "1.0"
   description = "IaaS with network, security, and compute"
@@ -327,12 +326,12 @@ resource "fractalcloud_fractal" "iaas" {
 ### Data Source Lookup
 
 ```hcl
-data "fractalcloud_personal_bounded_context" "existing" {
+data "fc_personal_bounded_context" "existing" {
   short_name = "production"
 }
 
-data "fractalcloud_fractal" "existing" {
-  bounded_context_id = data.fractalcloud_personal_bounded_context.existing.id
+data "fc_fractal" "existing" {
+  bounded_context_id = data.fc_personal_bounded_context.existing.id
   name    = "microservice-template"
   version = "1.0"
 }
