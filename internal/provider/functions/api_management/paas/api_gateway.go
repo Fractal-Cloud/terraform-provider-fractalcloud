@@ -34,6 +34,9 @@ func (f *PaaSAPIGatewayFunction) Definition(_ context.Context, _ function.Defini
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
+					"links": types.ListType{
+						ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes},
+					},
 				},
 			},
 		},
@@ -45,6 +48,7 @@ type paasAPIGatewayConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
+	Links       types.List   `tfsdk:"links"`
 }
 
 func (f *PaaSAPIGatewayFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -52,6 +56,22 @@ func (f *PaaSAPIGatewayFunction) Run(ctx context.Context, req function.RunReques
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &config))
 	if resp.Error != nil {
 		return
+	}
+
+	var links []components.ComponentLink
+	if !config.Links.IsNull() && !config.Links.IsUnknown() {
+		var genericLinks []components.GenericLinkConfig
+		diags := config.Links.ElementsAs(ctx, &genericLinks, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse links")
+			return
+		}
+		resolved, funcErr := components.GenericLinksToComponentLinks(genericLinks)
+		if funcErr != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
+			return
+		}
+		links = append(links, resolved...)
 	}
 
 	result, funcErr := components.BuildComponent(
@@ -62,7 +82,7 @@ func (f *PaaSAPIGatewayFunction) Run(ctx context.Context, req function.RunReques
 		types.StringNull(),
 		nil,
 		nil,
-		nil,
+		links,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

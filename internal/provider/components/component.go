@@ -36,28 +36,24 @@ var ComponentAttrTypes = map[string]attr.Type{
 // ComponentObjectType is the ObjectType for a component reference in function parameters.
 var ComponentObjectType = types.ObjectType{AttrTypes: ComponentAttrTypes}
 
-// PortLinkAttrTypes defines the object attributes for a port-based traffic link
-// used in function parameters (VM→VM, Workload→Workload).
+// GenericLinkAttrTypes defines the object attributes for a generic link
+// used in function parameters where settings are arbitrary key-value pairs.
 // The target is a full component object for type-safe references.
-var PortLinkAttrTypes = map[string]attr.Type{
-	"target":    ComponentObjectType,
-	"from_port": types.Int64Type,
-	"to_port":   types.Int64Type,
-	"protocol":  types.StringType,
+var GenericLinkAttrTypes = map[string]attr.Type{
+	"target":   ComponentObjectType,
+	"settings": types.MapType{ElemType: types.StringType},
+}
+
+// GenericLinkConfig is the Go struct for a generic link function parameter.
+type GenericLinkConfig struct {
+	Target   types.Object `tfsdk:"target"`
+	Settings types.Map    `tfsdk:"settings"`
 }
 
 // ComponentLink represents a resolved link ready to be set on the component.
 type ComponentLink struct {
 	ComponentId string
 	Settings    map[string]string
-}
-
-// PortLinkConfig is the Go struct for a port-based traffic link function parameter.
-type PortLinkConfig struct {
-	Target   types.Object `tfsdk:"target"`
-	FromPort types.Int64  `tfsdk:"from_port"`
-	ToPort   types.Int64  `tfsdk:"to_port"`
-	Protocol types.String `tfsdk:"protocol"`
 }
 
 // ComponentReturn returns the standard function return type for all component functions.
@@ -149,6 +145,11 @@ func BuildComponent(
 		linksValue = types.ListNull(LinkObjectType)
 	}
 
+	// Default version to "v1" if not explicitly provided
+	if version.IsNull() || version.IsUnknown() {
+		version = types.StringValue("v1")
+	}
+
 	attrs := map[string]attr.Value{
 		"id":                  types.StringValue(id),
 		"type":                types.StringValue(componentType),
@@ -219,29 +220,21 @@ func ExtractDependency(obj types.Object, expectedType string) (string, *function
 	return ExtractComponentId(obj)
 }
 
-// PortLinksToComponentLinks converts port-based traffic link configs to ComponentLinks.
-func PortLinksToComponentLinks(portLinks []PortLinkConfig) ([]ComponentLink, *function.FuncError) {
-	result := make([]ComponentLink, len(portLinks))
-	for i, pl := range portLinks {
-		targetId, err := ExtractComponentId(pl.Target)
+// GenericLinksToComponentLinks converts generic link configs to ComponentLinks.
+func GenericLinksToComponentLinks(genericLinks []GenericLinkConfig) ([]ComponentLink, *function.FuncError) {
+	result := make([]ComponentLink, len(genericLinks))
+	for i, gl := range genericLinks {
+		targetId, err := ExtractComponentId(gl.Target)
 		if err != nil {
 			return nil, err
 		}
 
-		settings := map[string]string{
-			"fromPort": fmt.Sprintf("%d", pl.FromPort.ValueInt64()),
-		}
-
-		if !pl.ToPort.IsNull() && !pl.ToPort.IsUnknown() {
-			settings["toPort"] = fmt.Sprintf("%d", pl.ToPort.ValueInt64())
-		} else {
-			settings["toPort"] = fmt.Sprintf("%d", pl.FromPort.ValueInt64())
-		}
-
-		if !pl.Protocol.IsNull() && !pl.Protocol.IsUnknown() {
-			settings["protocol"] = pl.Protocol.ValueString()
-		} else {
-			settings["protocol"] = "tcp"
+		var settings map[string]string
+		if !gl.Settings.IsNull() && !gl.Settings.IsUnknown() {
+			settings = make(map[string]string, len(gl.Settings.Elements()))
+			for k, v := range gl.Settings.Elements() {
+				settings[k] = v.(types.String).ValueString()
+			}
 		}
 
 		result[i] = ComponentLink{

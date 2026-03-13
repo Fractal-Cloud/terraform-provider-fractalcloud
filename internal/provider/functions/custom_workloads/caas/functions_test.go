@@ -58,7 +58,7 @@ var workloadAttrTypes = map[string]attr.Type{
 	"desired_count":   types.Int64Type,
 	"platform":        components.ComponentObjectType,
 	"subnet":          components.ComponentObjectType,
-	"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+	"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 }
 
@@ -99,7 +99,7 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 		"desired_count":   types.Int64Null(),
 		"platform":        types.ObjectNull(components.ComponentAttrTypes),
 		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
-		"links":           types.ListNull(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}),
+		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
 	})
 	if diags.HasError() {
@@ -124,16 +124,17 @@ func TestWorkloadFunction_Run_WithDepsAndParams(t *testing.T) {
 	sg := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 	target := buildTestComponent(t, "workload-2", "CustomWorkloads.CaaS.Workload")
 
-	portLink, diags := types.ObjectValue(components.PortLinkAttrTypes, map[string]attr.Value{
-		"target":    target,
-		"from_port": types.Int64Value(8080),
-		"to_port":   types.Int64Null(),
-		"protocol":  types.StringNull(),
+	linkSettings, _ := types.MapValue(types.StringType, map[string]attr.Value{
+		"fromPort": types.StringValue("8080"),
+	})
+	genericLink, diags := types.ObjectValue(components.GenericLinkAttrTypes, map[string]attr.Value{
+		"target":   target,
+		"settings": linkSettings,
 	})
 	if diags.HasError() {
-		t.Fatalf("failed to build port link: %s", diags.Errors())
+		t.Fatalf("failed to build generic link: %s", diags.Errors())
 	}
-	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}, []attr.Value{portLink})
+	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}, []attr.Value{genericLink})
 	if diags.HasError() {
 		t.Fatalf("failed to build link list: %s", diags.Errors())
 	}

@@ -18,9 +18,8 @@ locals {
   public_subnet = provider::fc::network_and_compute_iaas_subnet({
     id                = "public-subnet"
     display_name      = "Public Subnet"
-    description       = "Public-facing subnet in eu-central-1a"
+    description       = "Public-facing subnet"
     cidr_block        = "10.0.1.0/24"
-    availability_zone = "eu-central-1a"
     vpc               = local.main_vpc # type-checked dependency on VPC
   })
 
@@ -54,8 +53,10 @@ locals {
     security_groups = [local.web_sg]        # type-checked SG membership link
     links = [
       {
-        target    = local.api_server        # type-checked port-based traffic rule
-        from_port = 8080
+        target   = local.api_server
+        settings = {
+          fromPort = "8080"
+        }
       }
     ]
   })
@@ -116,9 +117,11 @@ locals {
     security_groups = []
     links = [
       {
-        target    = local.db_service    # type-checked traffic rule to database
-        from_port = 5432
-        protocol  = "tcp"
+        target   = local.db_service
+        settings = {
+          fromPort = "5432"
+          protocol = "tcp"
+        }
       }
     ]
   })

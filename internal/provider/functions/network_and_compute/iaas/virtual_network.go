@@ -34,7 +34,10 @@ func (f *VirtualNetworkFunction) Definition(_ context.Context, _ function.Defini
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"cidr_block":   types.StringType,
+					"cidr_block": types.StringType,
+					"links": types.ListType{
+						ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes},
+					},
 				},
 			},
 		},
@@ -46,7 +49,8 @@ type virtualNetworkConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	CidrBlock   types.String `tfsdk:"cidr_block"`
+	CidrBlock types.String `tfsdk:"cidr_block"`
+	Links     types.List   `tfsdk:"links"`
 }
 
 func (f *VirtualNetworkFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -61,6 +65,22 @@ func (f *VirtualNetworkFunction) Run(ctx context.Context, req function.RunReques
 		params["cidrBlock"] = config.CidrBlock.ValueString()
 	}
 
+	var links []components.ComponentLink
+	if !config.Links.IsNull() && !config.Links.IsUnknown() {
+		var genericLinks []components.GenericLinkConfig
+		diags := config.Links.ElementsAs(ctx, &genericLinks, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse links")
+			return
+		}
+		resolved, funcErr := components.GenericLinksToComponentLinks(genericLinks)
+		if funcErr != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
+			return
+		}
+		links = append(links, resolved...)
+	}
+
 	result, funcErr := components.BuildComponent(
 		config.Id.ValueString(),
 		"NetworkAndCompute.IaaS.VirtualNetwork",
@@ -69,7 +89,7 @@ func (f *VirtualNetworkFunction) Run(ctx context.Context, req function.RunReques
 		types.StringNull(),
 		params,
 		nil,
-		nil,
+		links,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

@@ -77,12 +77,12 @@ func TestDistributedDataProcessingFunction_Run(t *testing.T) {
 		"id":           types.StringType,
 		"display_name": types.StringType,
 		"description":  types.StringType,
-		"pricing_tier": types.StringType,
+		"links":        types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":           types.StringValue("databricks-1"),
 		"display_name": types.StringValue("My Databricks"),
 		"description":  types.StringNull(),
-		"pricing_tier": types.StringValue("premium"),
+		"links":        types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -93,11 +93,6 @@ func TestDistributedDataProcessingFunction_Run(t *testing.T) {
 
 	if attrs["type"].(types.String).ValueString() != "BigData.PaaS.DistributedDataProcessing" {
 		t.Errorf("expected type %q", "BigData.PaaS.DistributedDataProcessing")
-	}
-	params := attrs["parameters"].(types.Map)
-	elems := params.Elements()
-	if elems["pricingTier"].(types.String).ValueString() != "premium" {
-		t.Errorf("expected pricingTier %q", "premium")
 	}
 }
 
@@ -183,7 +178,6 @@ func TestComputeClusterFunction_Run(t *testing.T) {
 		"platform":                 components.ComponentObjectType,
 		"cluster_name":             types.StringType,
 		"spark_version":            types.StringType,
-		"node_type_id":             types.StringType,
 		"num_workers":              types.Int64Type,
 		"min_workers":              types.Int64Type,
 		"max_workers":              types.Int64Type,
@@ -191,6 +185,7 @@ func TestComputeClusterFunction_Run(t *testing.T) {
 		"spark_conf":               types.MapType{ElemType: types.StringType},
 		"pypi_libraries":           types.ListType{ElemType: types.StringType},
 		"maven_libraries":          types.ListType{ElemType: types.StringType},
+		"links":                    types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":                       types.StringValue("cluster-1"),
 		"display_name":             types.StringNull(),
@@ -198,7 +193,6 @@ func TestComputeClusterFunction_Run(t *testing.T) {
 		"platform":                 platform,
 		"cluster_name":             types.StringValue("my-cluster"),
 		"spark_version":            types.StringValue("13.3"),
-		"node_type_id":             types.StringValue("Standard_DS3_v2"),
 		"num_workers":              types.Int64Value(4),
 		"min_workers":              types.Int64Null(),
 		"max_workers":              types.Int64Null(),
@@ -206,6 +200,7 @@ func TestComputeClusterFunction_Run(t *testing.T) {
 		"spark_conf":               types.MapNull(types.StringType),
 		"pypi_libraries":           types.ListNull(types.StringType),
 		"maven_libraries":          types.ListNull(types.StringType),
+		"links":                    types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -265,7 +260,6 @@ func TestComputeClusterFunction_Run_AllParams(t *testing.T) {
 		"platform":                 components.ComponentObjectType,
 		"cluster_name":             types.StringType,
 		"spark_version":            types.StringType,
-		"node_type_id":             types.StringType,
 		"num_workers":              types.Int64Type,
 		"min_workers":              types.Int64Type,
 		"max_workers":              types.Int64Type,
@@ -273,6 +267,7 @@ func TestComputeClusterFunction_Run_AllParams(t *testing.T) {
 		"spark_conf":               types.MapType{ElemType: types.StringType},
 		"pypi_libraries":           types.ListType{ElemType: types.StringType},
 		"maven_libraries":          types.ListType{ElemType: types.StringType},
+		"links":                    types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":                       types.StringValue("cluster-2"),
 		"display_name":             types.StringValue("Full Cluster"),
@@ -280,7 +275,6 @@ func TestComputeClusterFunction_Run_AllParams(t *testing.T) {
 		"platform":                 platform,
 		"cluster_name":             types.StringValue("full-cluster"),
 		"spark_version":            types.StringValue("14.0"),
-		"node_type_id":             types.StringValue("Standard_DS4_v2"),
 		"num_workers":              types.Int64Value(8),
 		"min_workers":              types.Int64Value(2),
 		"max_workers":              types.Int64Value(16),
@@ -288,6 +282,7 @@ func TestComputeClusterFunction_Run_AllParams(t *testing.T) {
 		"spark_conf":               sparkConf,
 		"pypi_libraries":           pypiLibs,
 		"maven_libraries":          mavenLibs,
+		"links":                    types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -491,19 +486,17 @@ func TestMlExperimentFunction_Run(t *testing.T) {
 	f := NewBigdataPaasMlExperimentFunction()
 	platform := buildTestComponent(t, "databricks-1", "BigData.PaaS.DistributedDataProcessing")
 	configObj, diags := types.ObjectValue(map[string]attr.Type{
-		"id":                types.StringType,
-		"display_name":      types.StringType,
-		"description":       types.StringType,
-		"platform":          components.ComponentObjectType,
-		"experiment_name":   types.StringType,
-		"artifact_location": types.StringType,
+		"id":              types.StringType,
+		"display_name":    types.StringType,
+		"description":     types.StringType,
+		"platform":        components.ComponentObjectType,
+		"experiment_name": types.StringType,
 	}, map[string]attr.Value{
-		"id":                types.StringValue("exp-1"),
-		"display_name":      types.StringNull(),
-		"description":       types.StringNull(),
-		"platform":          platform,
-		"experiment_name":   types.StringValue("my-experiment"),
-		"artifact_location": types.StringValue("s3://bucket/artifacts"),
+		"id":              types.StringValue("exp-1"),
+		"display_name":    types.StringNull(),
+		"description":     types.StringNull(),
+		"platform":        platform,
+		"experiment_name": types.StringValue("my-experiment"),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -523,5 +516,69 @@ func TestMlExperimentFunction_Run(t *testing.T) {
 	elems := params.Elements()
 	if elems["experimentName"].(types.String).ValueString() != "my-experiment" {
 		t.Errorf("expected experimentName %q", "my-experiment")
+	}
+}
+
+func TestDistributedDataProcessingFunction_Run_WithLinks(t *testing.T) {
+	f := NewBigdataPaasDistributedDataProcessingFunction()
+	datalake := buildTestComponent(t, "data-lake", "BigData.PaaS.Datalake")
+
+	settingsMap, diags := types.MapValue(types.StringType, map[string]attr.Value{
+		"mountName": types.StringValue("datalake"),
+		"path":      types.StringValue("/"),
+	})
+	if diags.HasError() {
+		t.Fatalf("failed to build settings: %s", diags.Errors())
+	}
+
+	linkObj, diags := types.ObjectValue(components.GenericLinkAttrTypes, map[string]attr.Value{
+		"target":   datalake,
+		"settings": settingsMap,
+	})
+	if diags.HasError() {
+		t.Fatalf("failed to build link: %s", diags.Errors())
+	}
+
+	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}, []attr.Value{linkObj})
+	if diags.HasError() {
+		t.Fatalf("failed to build link list: %s", diags.Errors())
+	}
+
+	configObj, diags := types.ObjectValue(map[string]attr.Type{
+		"id":           types.StringType,
+		"display_name": types.StringType,
+		"description":  types.StringType,
+		"links":        types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
+	}, map[string]attr.Value{
+		"id":           types.StringValue("spark-platform"),
+		"display_name": types.StringValue("Spark Platform"),
+		"description":  types.StringNull(),
+		"links":        linkList,
+	})
+	if diags.HasError() {
+		t.Fatalf("failed to build config: %s", diags.Errors())
+	}
+
+	resp := runFunction(t, f, []attr.Value{configObj})
+	attrs := getResultAttrs(t, resp)
+
+	linksVal := attrs["links"].(types.List)
+	if linksVal.IsNull() {
+		t.Fatal("expected non-null links")
+	}
+	linkElems := linksVal.Elements()
+	if len(linkElems) != 1 {
+		t.Fatalf("expected 1 link, got %d", len(linkElems))
+	}
+	linkAttrs := linkElems[0].(types.Object).Attributes()
+	if linkAttrs["component_id"].(types.String).ValueString() != "data-lake" {
+		t.Errorf("expected link component_id %q", "data-lake")
+	}
+	linkSettings := linkAttrs["settings"].(types.Map)
+	if linkSettings.IsNull() {
+		t.Fatal("expected non-null settings")
+	}
+	if linkSettings.Elements()["mountName"].(types.String).ValueString() != "datalake" {
+		t.Errorf("expected mountName %q", "datalake")
 	}
 }

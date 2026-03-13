@@ -26,7 +26,6 @@ func (f *ContainerPlatformFunction) Metadata(_ context.Context, _ function.Metad
 
 var nodePoolAttrTypes = map[string]attr.Type{
 	"name":                types.StringType,
-	"machine_type":        types.StringType,
 	"disk_size_gb":        types.Int64Type,
 	"min_node_count":      types.Int64Type,
 	"max_node_count":      types.Int64Type,
@@ -67,7 +66,6 @@ type containerPlatformConfig struct {
 
 type nodePoolConfig struct {
 	Name               types.String `tfsdk:"name"`
-	MachineType        types.String `tfsdk:"machine_type"`
 	DiskSizeGb         types.Int64  `tfsdk:"disk_size_gb"`
 	MinNodeCount       types.Int64  `tfsdk:"min_node_count"`
 	MaxNodeCount       types.Int64  `tfsdk:"max_node_count"`
@@ -79,7 +77,6 @@ type nodePoolConfig struct {
 
 type nodePoolJSON struct {
 	Name               string `json:"name"`
-	MachineType        string `json:"machineType"`
 	DiskSizeGb         int64  `json:"diskSizeGb,omitempty"`
 	MinNodeCount       int64  `json:"minNodeCount,omitempty"`
 	MaxNodeCount       int64  `json:"maxNodeCount,omitempty"`
@@ -110,8 +107,7 @@ func (f *ContainerPlatformFunction) Run(ctx context.Context, req function.RunReq
 			jsonPools := make([]nodePoolJSON, len(pools))
 			for i, pool := range pools {
 				jsonPools[i] = nodePoolJSON{
-					Name:        pool.Name.ValueString(),
-					MachineType: pool.MachineType.ValueString(),
+					Name: pool.Name.ValueString(),
 				}
 				if !pool.DiskSizeGb.IsNull() && !pool.DiskSizeGb.IsUnknown() {
 					jsonPools[i].DiskSizeGb = pool.DiskSizeGb.ValueInt64()

@@ -285,7 +285,6 @@ locals {
     id                = "public-subnet"
     display_name      = "Public Subnet"
     cidr_block        = "10.0.1.0/24"
-    availability_zone = "eu-central-1a"
     vpc               = local.main_vpc   # type-checked dependency
   })
 

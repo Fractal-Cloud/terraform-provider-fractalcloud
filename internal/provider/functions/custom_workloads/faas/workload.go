@@ -28,7 +28,7 @@ func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRe
 		Summary: "Creates a FaaS Workload blueprint component",
 		Description: "Builds a FaaS Workload (serverless function) component with the correct type and parameters for use in a fractal's components list. " +
 			"Platform and subnet are component object references with type validation. " +
-			"Use links for port-based traffic rules to other workloads, and security_groups for SG membership.",
+			"Use links to define runtime relationships to other components, and security_groups for SG membership.",
 		Parameters: []function.Parameter{
 			function.ObjectParameter{
 				Name:        "config",
@@ -50,7 +50,7 @@ func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRe
 					"platform":        components.ComponentObjectType,
 					"subnet":          components.ComponentObjectType,
 					"links": types.ListType{
-						ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes},
+						ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes},
 					},
 					"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 				},
@@ -143,13 +143,13 @@ func (f *WorkloadFunction) Run(ctx context.Context, req function.RunRequest, res
 	var links []components.ComponentLink
 
 	if !config.Links.IsNull() && !config.Links.IsUnknown() {
-		var portLinks []components.PortLinkConfig
-		diags := config.Links.ElementsAs(ctx, &portLinks, false)
+		var genericLinks []components.GenericLinkConfig
+		diags := config.Links.ElementsAs(ctx, &genericLinks, false)
 		if diags.HasError() {
 			resp.Error = function.NewFuncError("failed to parse links")
 			return
 		}
-		resolved, funcErr := components.PortLinksToComponentLinks(portLinks)
+		resolved, funcErr := components.GenericLinksToComponentLinks(genericLinks)
 		if funcErr != nil {
 			resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 			return

@@ -77,10 +77,12 @@ func TestAPIGatewayFunction_Run(t *testing.T) {
 		"id":           types.StringType,
 		"display_name": types.StringType,
 		"description":  types.StringType,
+		"links":        types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":           types.StringValue("test-gw"),
 		"display_name": types.StringValue("Test Gateway"),
 		"description":  types.StringNull(),
+		"links":        types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())

@@ -91,7 +91,7 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 		"handler":         types.StringType,
 		"platform":        components.ComponentObjectType,
 		"subnet":          components.ComponentObjectType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("workload-1"),
@@ -109,7 +109,7 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 		"handler":         types.StringNull(),
 		"platform":        types.ObjectNull(components.ComponentAttrTypes),
 		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
-		"links":           types.ListNull(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}),
+		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
 	})
 	if diags.HasError() {
@@ -140,18 +140,19 @@ func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 	sg := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 	target := buildTestComponent(t, "workload-2", "CustomWorkloads.FaaS.Workload")
 
-	// Build a port link
-	portLink, diags := types.ObjectValue(components.PortLinkAttrTypes, map[string]attr.Value{
-		"target":    target,
-		"from_port": types.Int64Value(443),
-		"to_port":   types.Int64Null(),
-		"protocol":  types.StringNull(),
+	// Build a generic link
+	linkSettings, _ := types.MapValue(types.StringType, map[string]attr.Value{
+		"fromPort": types.StringValue("443"),
+	})
+	genericLink, diags := types.ObjectValue(components.GenericLinkAttrTypes, map[string]attr.Value{
+		"target":   target,
+		"settings": linkSettings,
 	})
 	if diags.HasError() {
-		t.Fatalf("failed to build port link: %s", diags.Errors())
+		t.Fatalf("failed to build generic link: %s", diags.Errors())
 	}
 
-	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}, []attr.Value{portLink})
+	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}, []attr.Value{genericLink})
 	if diags.HasError() {
 		t.Fatalf("failed to build link list: %s", diags.Errors())
 	}
@@ -177,7 +178,7 @@ func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 		"handler":         types.StringType,
 		"platform":        components.ComponentObjectType,
 		"subnet":          components.ComponentObjectType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("workload-1"),
@@ -304,7 +305,7 @@ func TestWorkloadFunction_Run_WrongPlatformType(t *testing.T) {
 		"handler":         types.StringType,
 		"platform":        components.ComponentObjectType,
 		"subnet":          components.ComponentObjectType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("workload-1"),
@@ -322,7 +323,7 @@ func TestWorkloadFunction_Run_WrongPlatformType(t *testing.T) {
 		"handler":         types.StringNull(),
 		"platform":        wrongPlatform,
 		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
-		"links":           types.ListNull(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}),
+		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
 	})
 	if diags.HasError() {

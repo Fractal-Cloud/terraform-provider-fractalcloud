@@ -107,7 +107,6 @@ func TestContainerPlatformFunction_Run_WithNodePools(t *testing.T) {
 
 	pool, poolDiags := types.ObjectValue(nodePoolAttrTypes, map[string]attr.Value{
 		"name":                types.StringValue("default-pool"),
-		"machine_type":        types.StringValue("e2-standard-4"),
 		"disk_size_gb":        types.Int64Value(100),
 		"min_node_count":      types.Int64Value(1),
 		"max_node_count":      types.Int64Value(5),
@@ -169,8 +168,5 @@ func TestContainerPlatformFunction_Run_WithNodePools(t *testing.T) {
 	}
 	if pools[0]["name"] != "default-pool" {
 		t.Errorf("expected pool name %q, got %q", "default-pool", pools[0]["name"])
-	}
-	if pools[0]["machineType"] != "e2-standard-4" {
-		t.Errorf("expected machineType %q, got %q", "e2-standard-4", pools[0]["machineType"])
 	}
 }

@@ -71,13 +71,13 @@ func TestBuildComponent_MinimalFields(t *testing.T) {
 		t.Errorf("expected description to be null, got %q", descVal.ValueString())
 	}
 
-	// version should be null
+	// version should default to "v1"
 	verVal, ok := attrs["version"].(types.String)
 	if !ok {
 		t.Fatal("version is not types.String")
 	}
-	if !verVal.IsNull() {
-		t.Errorf("expected version to be null, got %q", verVal.ValueString())
+	if verVal.IsNull() || verVal.ValueString() != "v1" {
+		t.Errorf("expected version %q, got %q", "v1", verVal.ValueString())
 	}
 
 	// parameters should be null map
@@ -418,142 +418,6 @@ func TestExtractDependency_UnknownObject(t *testing.T) {
 	}
 }
 
-// --- PortLinksToComponentLinks tests ---
-
-func TestPortLinksToComponentLinks_Basic(t *testing.T) {
-	target := buildTestComponent(t, "target-1", "NetworkAndCompute.IaaS.AwsEc2")
-	portLinks := []PortLinkConfig{
-		{
-			Target:   target,
-			FromPort: types.Int64Value(8080),
-			ToPort:   types.Int64Null(),
-			Protocol: types.StringNull(),
-		},
-	}
-
-	result, funcErr := PortLinksToComponentLinks(portLinks)
-	if funcErr != nil {
-		t.Fatalf("unexpected error: %s", funcErr.Text)
-	}
-	if len(result) != 1 {
-		t.Fatalf("expected 1 link, got %d", len(result))
-	}
-
-	link := result[0]
-	if link.ComponentId != "target-1" {
-		t.Errorf("expected component id %q, got %q", "target-1", link.ComponentId)
-	}
-	if link.Settings["fromPort"] != "8080" {
-		t.Errorf("expected fromPort %q, got %q", "8080", link.Settings["fromPort"])
-	}
-	if link.Settings["toPort"] != "8080" {
-		t.Errorf("expected toPort to default to fromPort %q, got %q", "8080", link.Settings["toPort"])
-	}
-	if link.Settings["protocol"] != "tcp" {
-		t.Errorf("expected protocol to default to %q, got %q", "tcp", link.Settings["protocol"])
-	}
-}
-
-func TestPortLinksToComponentLinks_AllFields(t *testing.T) {
-	target := buildTestComponent(t, "target-2", "NetworkAndCompute.IaaS.AwsEc2")
-	portLinks := []PortLinkConfig{
-		{
-			Target:   target,
-			FromPort: types.Int64Value(80),
-			ToPort:   types.Int64Value(443),
-			Protocol: types.StringValue("udp"),
-		},
-	}
-
-	result, funcErr := PortLinksToComponentLinks(portLinks)
-	if funcErr != nil {
-		t.Fatalf("unexpected error: %s", funcErr.Text)
-	}
-	if len(result) != 1 {
-		t.Fatalf("expected 1 link, got %d", len(result))
-	}
-
-	link := result[0]
-	if link.ComponentId != "target-2" {
-		t.Errorf("expected component id %q, got %q", "target-2", link.ComponentId)
-	}
-	if link.Settings["fromPort"] != "80" {
-		t.Errorf("expected fromPort %q, got %q", "80", link.Settings["fromPort"])
-	}
-	if link.Settings["toPort"] != "443" {
-		t.Errorf("expected toPort %q, got %q", "443", link.Settings["toPort"])
-	}
-	if link.Settings["protocol"] != "udp" {
-		t.Errorf("expected protocol %q, got %q", "udp", link.Settings["protocol"])
-	}
-}
-
-func TestPortLinksToComponentLinks_NullTarget(t *testing.T) {
-	portLinks := []PortLinkConfig{
-		{
-			Target:   types.ObjectNull(ComponentAttrTypes),
-			FromPort: types.Int64Value(8080),
-			ToPort:   types.Int64Null(),
-			Protocol: types.StringNull(),
-		},
-	}
-
-	_, funcErr := PortLinksToComponentLinks(portLinks)
-	if funcErr == nil {
-		t.Fatal("expected error for null target, got nil")
-	}
-}
-
-func TestPortLinksToComponentLinks_MultipleLinks(t *testing.T) {
-	target1 := buildTestComponent(t, "target-a", "NetworkAndCompute.IaaS.AwsEc2")
-	target2 := buildTestComponent(t, "target-b", "NetworkAndCompute.IaaS.AwsEc2")
-	portLinks := []PortLinkConfig{
-		{
-			Target:   target1,
-			FromPort: types.Int64Value(80),
-			ToPort:   types.Int64Null(),
-			Protocol: types.StringNull(),
-		},
-		{
-			Target:   target2,
-			FromPort: types.Int64Value(443),
-			ToPort:   types.Int64Value(8443),
-			Protocol: types.StringValue("tcp"),
-		},
-	}
-
-	result, funcErr := PortLinksToComponentLinks(portLinks)
-	if funcErr != nil {
-		t.Fatalf("unexpected error: %s", funcErr.Text)
-	}
-	if len(result) != 2 {
-		t.Fatalf("expected 2 links, got %d", len(result))
-	}
-
-	if result[0].ComponentId != "target-a" {
-		t.Errorf("expected first link component id %q, got %q", "target-a", result[0].ComponentId)
-	}
-	if result[0].Settings["fromPort"] != "80" {
-		t.Errorf("expected first link fromPort %q, got %q", "80", result[0].Settings["fromPort"])
-	}
-	if result[0].Settings["toPort"] != "80" {
-		t.Errorf("expected first link toPort to default to %q, got %q", "80", result[0].Settings["toPort"])
-	}
-
-	if result[1].ComponentId != "target-b" {
-		t.Errorf("expected second link component id %q, got %q", "target-b", result[1].ComponentId)
-	}
-	if result[1].Settings["fromPort"] != "443" {
-		t.Errorf("expected second link fromPort %q, got %q", "443", result[1].Settings["fromPort"])
-	}
-	if result[1].Settings["toPort"] != "8443" {
-		t.Errorf("expected second link toPort %q, got %q", "8443", result[1].Settings["toPort"])
-	}
-	if result[1].Settings["protocol"] != "tcp" {
-		t.Errorf("expected second link protocol %q, got %q", "tcp", result[1].Settings["protocol"])
-	}
-}
-
 // --- SgMembershipLinks tests ---
 
 func TestSgMembershipLinks_Valid(t *testing.T) {
@@ -647,5 +511,72 @@ func TestComponentReturn_HasCorrectAttrTypes(t *testing.T) {
 		if !gotType.Equal(expectedType) {
 			t.Errorf("attribute type mismatch for key %q: expected %v, got %v", key, expectedType, gotType)
 		}
+	}
+}
+
+func TestGenericLinksToComponentLinks_WithSettings(t *testing.T) {
+	target := buildTestComponent(t, "target-1", "BigData.PaaS.Datalake")
+	genericLinks := []GenericLinkConfig{
+		{
+			Target: target,
+			Settings: func() types.Map {
+				m, _ := types.MapValue(types.StringType, map[string]attr.Value{
+					"mountName": types.StringValue("datalake"),
+				})
+				return m
+			}(),
+		},
+	}
+
+	result, funcErr := GenericLinksToComponentLinks(genericLinks)
+	if funcErr != nil {
+		t.Fatalf("unexpected error: %s", funcErr.Text)
+	}
+	if len(result) != 1 {
+		t.Fatalf("expected 1 link, got %d", len(result))
+	}
+	if result[0].ComponentId != "target-1" {
+		t.Errorf("expected component id %q, got %q", "target-1", result[0].ComponentId)
+	}
+	if result[0].Settings["mountName"] != "datalake" {
+		t.Errorf("expected mountName %q, got %q", "datalake", result[0].Settings["mountName"])
+	}
+}
+
+func TestGenericLinksToComponentLinks_NoSettings(t *testing.T) {
+	target := buildTestComponent(t, "peer-vpc", "NetworkAndCompute.IaaS.VirtualNetwork")
+	genericLinks := []GenericLinkConfig{
+		{
+			Target:   target,
+			Settings: types.MapNull(types.StringType),
+		},
+	}
+
+	result, funcErr := GenericLinksToComponentLinks(genericLinks)
+	if funcErr != nil {
+		t.Fatalf("unexpected error: %s", funcErr.Text)
+	}
+	if len(result) != 1 {
+		t.Fatalf("expected 1 link, got %d", len(result))
+	}
+	if result[0].ComponentId != "peer-vpc" {
+		t.Errorf("expected component id %q, got %q", "peer-vpc", result[0].ComponentId)
+	}
+	if result[0].Settings != nil {
+		t.Errorf("expected nil settings, got %v", result[0].Settings)
+	}
+}
+
+func TestGenericLinksToComponentLinks_NullTarget(t *testing.T) {
+	genericLinks := []GenericLinkConfig{
+		{
+			Target:   types.ObjectNull(ComponentAttrTypes),
+			Settings: types.MapNull(types.StringType),
+		},
+	}
+
+	_, funcErr := GenericLinksToComponentLinks(genericLinks)
+	if funcErr == nil {
+		t.Fatal("expected error for null target, got nil")
 	}
 }

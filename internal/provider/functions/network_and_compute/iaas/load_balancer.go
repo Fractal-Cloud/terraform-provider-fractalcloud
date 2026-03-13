@@ -36,7 +36,7 @@ func (f *LoadBalancerFunction) Definition(_ context.Context, _ function.Definiti
 					"display_name": types.StringType,
 					"description":  types.StringType,
 					"links": types.ListType{
-						ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes},
+						ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes},
 					},
 					"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 				},
@@ -61,17 +61,17 @@ func (f *LoadBalancerFunction) Run(ctx context.Context, req function.RunRequest,
 		return
 	}
 
-	// Build links from port-based traffic rules and SG memberships
+	// Build links from generic links and SG memberships
 	var links []components.ComponentLink
 
 	if !config.Links.IsNull() && !config.Links.IsUnknown() {
-		var portLinks []components.PortLinkConfig
-		diags := config.Links.ElementsAs(ctx, &portLinks, false)
+		var genericLinks []components.GenericLinkConfig
+		diags := config.Links.ElementsAs(ctx, &genericLinks, false)
 		if diags.HasError() {
 			resp.Error = function.NewFuncError("failed to parse links")
 			return
 		}
-		resolved, funcErr := components.PortLinksToComponentLinks(portLinks)
+		resolved, funcErr := components.GenericLinksToComponentLinks(genericLinks)
 		if funcErr != nil {
 			resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 			return

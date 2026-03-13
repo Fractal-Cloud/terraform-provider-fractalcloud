@@ -184,11 +184,13 @@ func TestVirtualNetworkFunction_Run_Minimal(t *testing.T) {
 		"display_name": types.StringType,
 		"description":  types.StringType,
 		"cidr_block":   types.StringType,
+		"links":        types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":           types.StringValue("my-vpc"),
 		"display_name": types.StringNull(),
 		"description":  types.StringNull(),
 		"cidr_block":   types.StringNull(),
+		"links":        types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -215,11 +217,13 @@ func TestVirtualNetworkFunction_Run_WithParams(t *testing.T) {
 		"display_name": types.StringType,
 		"description":  types.StringType,
 		"cidr_block":   types.StringType,
+		"links":        types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":           types.StringValue("vpc-1"),
 		"display_name": types.StringValue("My VPC"),
 		"description":  types.StringValue("Test VPC"),
 		"cidr_block":   types.StringValue("10.0.0.0/16"),
+		"links":        types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -247,19 +251,17 @@ func TestVirtualNetworkFunction_Run_WithParams(t *testing.T) {
 func TestSubnetFunction_Run_Minimal(t *testing.T) {
 	f := NewSubnetFunction()
 	configObj, diags := types.ObjectValue(map[string]attr.Type{
-		"id":                types.StringType,
-		"display_name":      types.StringType,
-		"description":       types.StringType,
-		"cidr_block":        types.StringType,
-		"availability_zone": types.StringType,
-		"vpc":               components.ComponentObjectType,
+		"id":           types.StringType,
+		"display_name": types.StringType,
+		"description":  types.StringType,
+		"cidr_block":   types.StringType,
+		"vpc":          components.ComponentObjectType,
 	}, map[string]attr.Value{
-		"id":                types.StringValue("subnet-1"),
-		"display_name":      types.StringNull(),
-		"description":       types.StringNull(),
-		"cidr_block":        types.StringNull(),
-		"availability_zone": types.StringNull(),
-		"vpc":               types.ObjectNull(components.ComponentAttrTypes),
+		"id":           types.StringValue("subnet-1"),
+		"display_name": types.StringNull(),
+		"description":  types.StringNull(),
+		"cidr_block":   types.StringNull(),
+		"vpc":          types.ObjectNull(components.ComponentAttrTypes),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -283,19 +285,17 @@ func TestSubnetFunction_Run_WithVpc(t *testing.T) {
 	f := NewSubnetFunction()
 	vpc := buildTestComponent(t, "my-vpc", "NetworkAndCompute.IaaS.VirtualNetwork")
 	configObj, diags := types.ObjectValue(map[string]attr.Type{
-		"id":                types.StringType,
-		"display_name":      types.StringType,
-		"description":       types.StringType,
-		"cidr_block":        types.StringType,
-		"availability_zone": types.StringType,
-		"vpc":               components.ComponentObjectType,
+		"id":           types.StringType,
+		"display_name": types.StringType,
+		"description":  types.StringType,
+		"cidr_block":   types.StringType,
+		"vpc":          components.ComponentObjectType,
 	}, map[string]attr.Value{
-		"id":                types.StringValue("subnet-1"),
-		"display_name":      types.StringNull(),
-		"description":       types.StringNull(),
-		"cidr_block":        types.StringValue("10.0.1.0/24"),
-		"availability_zone": types.StringValue("us-east-1a"),
-		"vpc":               vpc,
+		"id":           types.StringValue("subnet-1"),
+		"display_name": types.StringNull(),
+		"description":  types.StringNull(),
+		"cidr_block":   types.StringValue("10.0.1.0/24"),
+		"vpc":          vpc,
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -323,28 +323,23 @@ func TestSubnetFunction_Run_WithVpc(t *testing.T) {
 	if elems["cidrBlock"].(types.String).ValueString() != "10.0.1.0/24" {
 		t.Errorf("expected cidrBlock %q, got %q", "10.0.1.0/24", elems["cidrBlock"].(types.String).ValueString())
 	}
-	if elems["availabilityZone"].(types.String).ValueString() != "us-east-1a" {
-		t.Errorf("expected availabilityZone %q, got %q", "us-east-1a", elems["availabilityZone"].(types.String).ValueString())
-	}
 }
 
 func TestSubnetFunction_Run_WrongVpcType(t *testing.T) {
 	f := NewSubnetFunction()
 	wrongVpc := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 	configObj, diags := types.ObjectValue(map[string]attr.Type{
-		"id":                types.StringType,
-		"display_name":      types.StringType,
-		"description":       types.StringType,
-		"cidr_block":        types.StringType,
-		"availability_zone": types.StringType,
-		"vpc":               components.ComponentObjectType,
+		"id":           types.StringType,
+		"display_name": types.StringType,
+		"description":  types.StringType,
+		"cidr_block":   types.StringType,
+		"vpc":          components.ComponentObjectType,
 	}, map[string]attr.Value{
-		"id":                types.StringValue("subnet-1"),
-		"display_name":      types.StringNull(),
-		"description":       types.StringNull(),
-		"cidr_block":        types.StringNull(),
-		"availability_zone": types.StringNull(),
-		"vpc":               wrongVpc,
+		"id":           types.StringValue("subnet-1"),
+		"display_name": types.StringNull(),
+		"description":  types.StringNull(),
+		"cidr_block":   types.StringNull(),
+		"vpc":          wrongVpc,
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -479,14 +474,14 @@ func TestVirtualMachineFunction_Run_Minimal(t *testing.T) {
 		"display_name":    types.StringType,
 		"description":     types.StringType,
 		"subnet":          components.ComponentObjectType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("vm-1"),
 		"display_name":    types.StringNull(),
 		"description":     types.StringNull(),
 		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
-		"links":           types.ListNull(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}),
+		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
 	})
 	if diags.HasError() {
@@ -510,18 +505,19 @@ func TestVirtualMachineFunction_Run_WithDepsAndLinks(t *testing.T) {
 	sg := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 	target := buildTestComponent(t, "vm-2", "NetworkAndCompute.IaaS.VirtualMachine")
 
-	// Build a port link
-	portLink, diags := types.ObjectValue(components.PortLinkAttrTypes, map[string]attr.Value{
-		"target":    target,
-		"from_port": types.Int64Value(8080),
-		"to_port":   types.Int64Null(),
-		"protocol":  types.StringNull(),
+	// Build a generic link
+	linkSettings, _ := types.MapValue(types.StringType, map[string]attr.Value{
+		"fromPort": types.StringValue("8080"),
+	})
+	genericLink, diags := types.ObjectValue(components.GenericLinkAttrTypes, map[string]attr.Value{
+		"target":   target,
+		"settings": linkSettings,
 	})
 	if diags.HasError() {
-		t.Fatalf("failed to build port link: %s", diags.Errors())
+		t.Fatalf("failed to build generic link: %s", diags.Errors())
 	}
 
-	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}, []attr.Value{portLink})
+	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}, []attr.Value{genericLink})
 	if diags.HasError() {
 		t.Fatalf("failed to build link list: %s", diags.Errors())
 	}
@@ -536,7 +532,7 @@ func TestVirtualMachineFunction_Run_WithDepsAndLinks(t *testing.T) {
 		"display_name":    types.StringType,
 		"description":     types.StringType,
 		"subnet":          components.ComponentObjectType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("vm-1"),
@@ -596,13 +592,13 @@ func TestLoadBalancerFunction_Run_Minimal(t *testing.T) {
 		"id":              types.StringType,
 		"display_name":    types.StringType,
 		"description":     types.StringType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("lb-1"),
 		"display_name":    types.StringNull(),
 		"description":     types.StringNull(),
-		"links":           types.ListNull(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}),
+		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
 	})
 	if diags.HasError() {
@@ -625,17 +621,20 @@ func TestLoadBalancerFunction_Run_WithLinks(t *testing.T) {
 	target := buildTestComponent(t, "backend-1", "CustomWorkloads.CaaS.Workload")
 	sg := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 
-	portLink, diags := types.ObjectValue(components.PortLinkAttrTypes, map[string]attr.Value{
-		"target":    target,
-		"from_port": types.Int64Value(80),
-		"to_port":   types.Int64Value(8080),
-		"protocol":  types.StringValue("tcp"),
+	lbLinkSettings, _ := types.MapValue(types.StringType, map[string]attr.Value{
+		"fromPort": types.StringValue("80"),
+		"toPort":   types.StringValue("8080"),
+		"protocol": types.StringValue("tcp"),
+	})
+	genericLink, diags := types.ObjectValue(components.GenericLinkAttrTypes, map[string]attr.Value{
+		"target":   target,
+		"settings": lbLinkSettings,
 	})
 	if diags.HasError() {
-		t.Fatalf("failed to build port link: %s", diags.Errors())
+		t.Fatalf("failed to build generic link: %s", diags.Errors())
 	}
 
-	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.PortLinkAttrTypes}, []attr.Value{portLink})
+	linkList, diags := types.ListValue(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}, []attr.Value{genericLink})
 	if diags.HasError() {
 		t.Fatalf("failed to build link list: %s", diags.Errors())
 	}
@@ -649,7 +648,7 @@ func TestLoadBalancerFunction_Run_WithLinks(t *testing.T) {
 		"id":              types.StringType,
 		"display_name":    types.StringType,
 		"description":     types.StringType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.PortLinkAttrTypes}},
+		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
 	}, map[string]attr.Value{
 		"id":              types.StringValue("lb-1"),

@@ -34,7 +34,9 @@ func (f *BigdataPaasDistributedDataProcessingFunction) Definition(_ context.Cont
 					"id":           types.StringType,
 					"display_name": types.StringType,
 					"description":  types.StringType,
-					"pricing_tier": types.StringType,
+					"links": types.ListType{
+						ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes},
+					},
 				},
 			},
 		},
@@ -46,7 +48,7 @@ type bigdataPaasDistributedDataProcessingConfig struct {
 	Id          types.String `tfsdk:"id"`
 	DisplayName types.String `tfsdk:"display_name"`
 	Description types.String `tfsdk:"description"`
-	PricingTier types.String `tfsdk:"pricing_tier"`
+	Links       types.List   `tfsdk:"links"`
 }
 
 func (f *BigdataPaasDistributedDataProcessingFunction) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
@@ -56,9 +58,20 @@ func (f *BigdataPaasDistributedDataProcessingFunction) Run(ctx context.Context, 
 		return
 	}
 
-	params := map[string]string{}
-	if !config.PricingTier.IsNull() && !config.PricingTier.IsUnknown() {
-		params["pricingTier"] = config.PricingTier.ValueString()
+	var links []components.ComponentLink
+	if !config.Links.IsNull() && !config.Links.IsUnknown() {
+		var genericLinks []components.GenericLinkConfig
+		diags := config.Links.ElementsAs(ctx, &genericLinks, false)
+		if diags.HasError() {
+			resp.Error = function.NewFuncError("failed to parse links")
+			return
+		}
+		resolved, funcErr := components.GenericLinksToComponentLinks(genericLinks)
+		if funcErr != nil {
+			resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
+			return
+		}
+		links = append(links, resolved...)
 	}
 
 	result, funcErr := components.BuildComponent(
@@ -67,9 +80,9 @@ func (f *BigdataPaasDistributedDataProcessingFunction) Run(ctx context.Context, 
 		components.OptionalString(config.DisplayName),
 		components.OptionalString(config.Description),
 		types.StringNull(),
-		params,
 		nil,
 		nil,
+		links,
 	)
 	resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
 	if resp.Error != nil {

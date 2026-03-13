@@ -18,18 +18,16 @@ locals {
   org_web_subnet = provider::fc::network_and_compute_iaas_subnet({
     id                = "web-subnet"
     display_name      = "Web Tier Subnet"
-    description       = "Web tier subnet in eu-central-1a"
+    description       = "Web tier subnet"
     cidr_block        = "10.0.1.0/24"
-    availability_zone = "eu-central-1a"
     vpc               = local.org_main_vpc
   })
 
   org_app_subnet = provider::fc::network_and_compute_iaas_subnet({
     id                = "app-subnet"
     display_name      = "App Tier Subnet"
-    description       = "Application tier subnet in eu-central-1b"
+    description       = "Application tier subnet"
     cidr_block        = "10.0.2.0/24"
-    availability_zone = "eu-central-1b"
     vpc               = local.org_main_vpc
   })
 
@@ -78,8 +76,10 @@ locals {
     security_groups = [local.org_web_sg]
     links = [
       {
-        target    = local.org_app_server
-        from_port = 8080
+        target   = local.org_app_server
+        settings = {
+          fromPort = "8080"
+        }
       }
     ]
   })

@@ -78,11 +78,13 @@ func TestAPIGatewayFunction_Run_NullDependency(t *testing.T) {
 		"display_name":       types.StringType,
 		"description":        types.StringType,
 		"container_platform": components.ComponentObjectType,
+		"links":              types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":                 types.StringValue("test-gw"),
 		"display_name":       types.StringValue("Test Gateway"),
 		"description":        types.StringNull(),
 		"container_platform": types.ObjectNull(components.ComponentAttrTypes),
+		"links":              types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
@@ -110,11 +112,13 @@ func TestAPIGatewayFunction_Run_WithDependency(t *testing.T) {
 		"display_name":       types.StringType,
 		"description":        types.StringType,
 		"container_platform": components.ComponentObjectType,
+		"links":              types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	}, map[string]attr.Value{
 		"id":                 types.StringValue("test-gw"),
 		"display_name":       types.StringNull(),
 		"description":        types.StringNull(),
 		"container_platform": cp,
+		"links":              types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 	})
 	if diags.HasError() {
 		t.Fatalf("failed to build config: %s", diags.Errors())
