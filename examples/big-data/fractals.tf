@@ -7,7 +7,7 @@
 
 locals {
   # ── Core platform ──────────────────────────────────────────────────────
-  spark_platform = provider::fractalcloud::bigdata_paas_distributed_data_processing({
+  spark_platform = provider::fc::bigdata_paas_distributed_data_processing({
     id           = "spark-platform"
     display_name = "Spark Processing Platform"
     description  = "Central Databricks workspace for all data workloads"
@@ -15,7 +15,7 @@ locals {
   })
 
   # ── Data lake ──────────────────────────────────────────────────────────
-  data_lake = provider::fractalcloud::bigdata_paas_datalake({
+  data_lake = provider::fc::bigdata_paas_datalake({
     id           = "data-lake"
     display_name = "Data Lake"
     description  = "Cloud object storage for raw ingestion and curated datasets"
@@ -24,7 +24,7 @@ locals {
   # ── Compute clusters ───────────────────────────────────────────────────
 
   # Interactive cluster for ad-hoc analytics and development
-  analytics_cluster = provider::fractalcloud::bigdata_paas_compute_cluster({
+  analytics_cluster = provider::fc::bigdata_paas_compute_cluster({
     id                       = "analytics-cluster"
     display_name             = "Analytics Cluster"
     description              = "Interactive cluster for ad-hoc queries and notebook development"
@@ -50,7 +50,7 @@ locals {
   })
 
   # Dedicated ETL cluster with autoscaling for batch workloads
-  etl_cluster = provider::fractalcloud::bigdata_paas_compute_cluster({
+  etl_cluster = provider::fc::bigdata_paas_compute_cluster({
     id                       = "etl-cluster"
     display_name             = "ETL Cluster"
     description              = "Autoscaling cluster for scheduled ETL pipelines"
@@ -78,7 +78,7 @@ locals {
   # ── Data processing jobs ───────────────────────────────────────────────
 
   # Daily ingestion job: loads raw data from external sources into the bronze layer
-  daily_ingestion = provider::fractalcloud::bigdata_paas_data_processing_job({
+  daily_ingestion = provider::fc::bigdata_paas_data_processing_job({
     id               = "daily-ingestion"
     display_name     = "Daily Data Ingestion"
     description      = "Ingests raw data from upstream sources into the bronze layer"
@@ -96,7 +96,7 @@ locals {
   })
 
   # Hourly transformation job: curates bronze data into silver/gold layers
-  hourly_transform = provider::fractalcloud::bigdata_paas_data_processing_job({
+  hourly_transform = provider::fc::bigdata_paas_data_processing_job({
     id               = "hourly-transform"
     display_name     = "Hourly Data Transformation"
     description      = "Transforms and curates data from bronze to silver and gold layers"
@@ -114,7 +114,7 @@ locals {
   })
 
   # Weekly model retraining job
-  weekly_model_training = provider::fractalcloud::bigdata_paas_data_processing_job({
+  weekly_model_training = provider::fc::bigdata_paas_data_processing_job({
     id               = "weekly-model-training"
     display_name     = "Weekly Model Training"
     description      = "Retrains ML models on latest curated data"
@@ -132,7 +132,7 @@ locals {
   })
 
   # Spark JAR batch job for high-performance data processing
-  batch_aggregation = provider::fractalcloud::bigdata_paas_data_processing_job({
+  batch_aggregation = provider::fc::bigdata_paas_data_processing_job({
     id               = "batch-aggregation"
     display_name     = "Batch Aggregation Job"
     description      = "JVM-based batch aggregation for reporting datasets"
@@ -151,7 +151,7 @@ locals {
 
   # ── ML experiment tracking ─────────────────────────────────────────────
 
-  churn_experiment = provider::fractalcloud::bigdata_paas_ml_experiment({
+  churn_experiment = provider::fc::bigdata_paas_ml_experiment({
     id                = "churn-experiment"
     display_name      = "Churn Prediction Experiment"
     description       = "MLflow experiment tracking for customer churn prediction models"
@@ -160,7 +160,7 @@ locals {
     artifact_location = "s3://data-platform-artifacts/ml/churn-prediction"
   })
 
-  forecast_experiment = provider::fractalcloud::bigdata_paas_ml_experiment({
+  forecast_experiment = provider::fc::bigdata_paas_ml_experiment({
     id                = "forecast-experiment"
     display_name      = "Demand Forecasting Experiment"
     description       = "MLflow experiment tracking for demand forecasting models"
@@ -170,15 +170,15 @@ locals {
   })
 
   # ── External (unmanaged) resource ──────────────────────────────────────
-  legacy_hadoop = provider::fractalcloud::bigdata_saas_unmanaged({
+  legacy_hadoop = provider::fc::bigdata_saas_unmanaged({
     id           = "legacy-hadoop"
     display_name = "Legacy Hadoop Cluster"
     description  = "On-premises Hadoop cluster for legacy batch workloads pending migration"
   })
 }
 
-resource "fractalcloud_fractal" "big_data_fractal" {
-  bounded_context_id = data.fractalcloud_personal_bounded_context.existing_bounded_context.id
+resource "fc_fractal" "big_data_fractal" {
+  bounded_context_id = data.fc_personal_bounded_context.existing_bounded_context.id
   name        = "data-platform"
   version     = "1.0"
   description = "Big Data Fractal with Spark processing, ETL jobs, ML experiments, and data lake storage"
@@ -199,5 +199,5 @@ resource "fractalcloud_fractal" "big_data_fractal" {
 }
 
 output "big_data_fractal" {
-  value = fractalcloud_fractal.big_data_fractal
+  value = fc_fractal.big_data_fractal
 }

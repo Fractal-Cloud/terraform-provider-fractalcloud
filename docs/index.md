@@ -1,18 +1,76 @@
 ---
 page_title: "Fractal Cloud Provider"
 description: |-
-  
+  The Fractal Cloud provider enables platform teams to manage bounded contexts, environments, and fractal (blueprint) definitions through Terraform.
 ---
 
 # Fractal Cloud Provider
 
+The Terraform Provider for [Fractal Cloud](https://fractal.cloud) enables platform and operations teams to manage Fractal Cloud governance resources through Terraform. It covers organizational structure, bounded contexts, environments, and fractal (blueprint) publication workflows.
 
+Fractal Cloud is a platform engineering solution that delivers secure, compliant infrastructure across any cloud. It provides developers with ready-to-use building blocks and architecture templates while centralizing automation and governance for operations teams.
+
+## Authentication
+
+The provider authenticates using a Fractal Cloud service account. Credentials can be set via HCL attributes or environment variables.
+
+| Attribute | Environment Variable | Required | Description |
+|---|---|---|---|
+| `service_account_id` | `FRACTAL_CLOUD_SERVICE_ACCOUNT_ID` | Yes | Service account identifier |
+| `service_account_secret` | `FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET` | Yes | Service account secret |
+| `host` | -- | No | API endpoint (defaults to `https://api.fractal.cloud`) |
+
+Environment variables are used as defaults and can be overridden by HCL attributes.
 
 ## Example Usage
 
 ```terraform
-provider "fractalcloud" {
+terraform {
+  required_providers {
+    fc = {
+      source  = "fractalcloud/fc"
+      version = "~> 0.1"
+    }
+  }
+  required_version = ">= 1.1.0"
+}
 
+provider "fc" {
+  service_account_id     = var.fc_service_account_id
+  service_account_secret = var.fc_service_account_secret
+}
+```
+
+## Provider Functions
+
+The provider includes 46 blueprint component builder functions organized by infrastructure domain and delivery model. These functions create component objects for use in a fractal's `components` list. Dependencies between components are expressed as direct object references (type-checked at plan time) rather than string IDs.
+
+```terraform
+locals {
+  k8s_cluster = provider::fc::network_and_compute_paas_container_platform({
+    id           = "k8s-cluster"
+    display_name = "Kubernetes Cluster"
+  })
+
+  api_service = provider::fc::custom_workloads_caas_workload({
+    id              = "api-service"
+    display_name    = "API Service"
+    container_image = "my-registry/api-service:latest"
+    container_port  = 8080
+    platform        = local.k8s_cluster  # type-checked reference
+  })
+}
+
+resource "fc_fractal" "microservice" {
+  bounded_context_id = fc_personal_bounded_context.production.id
+  name        = "microservice-template"
+  version     = "1.0"
+  description = "Standard microservice architecture blueprint"
+
+  components = [
+    local.k8s_cluster,
+    local.api_service,
+  ]
 }
 ```
 
@@ -21,4 +79,6 @@ provider "fractalcloud" {
 
 ### Optional
 
-- `endpoint` (String) Example provider attribute
+- `host` (String) Fractal Cloud API endpoint. Defaults to `https://api.fractal.cloud`.
+- `service_account_id` (String) Service account identifier. Can also be set with the `FRACTAL_CLOUD_SERVICE_ACCOUNT_ID` environment variable.
+- `service_account_secret` (String) Service account secret. Can also be set with the `FRACTAL_CLOUD_SERVICE_ACCOUNT_SECRET` environment variable.

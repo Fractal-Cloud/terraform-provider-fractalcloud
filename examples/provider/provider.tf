@@ -1,12 +1,12 @@
 terraform {
   required_providers {
-    fractalcloud = {
+    fc = {
       source = "registry.terraform.io/fractalcloud/fc"
     }
   }
 }
 
-provider "fractalcloud" {
+provider "fc" {
   service_account_id = "xxx"
   service_account_secret = "xxx"
 }

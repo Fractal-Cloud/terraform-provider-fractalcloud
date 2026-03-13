@@ -1,5 +1,5 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
+// Copyright (c) Fractal Cloud
+// SPDX-License-Identifier: GPL-3.0
 
 package main
 
