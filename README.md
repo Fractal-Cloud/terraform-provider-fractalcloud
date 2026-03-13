@@ -2,7 +2,7 @@
 
 [![build status][build-image]][build-url]
 [![codecov][codecov-image]][codecov-url]
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Go](https://img.shields.io/badge/Go-1.24+-00ADD8.svg)](https://go.dev/)
 [![Terraform](https://img.shields.io/badge/Terraform-1.1+-7B42BC.svg)](https://www.terraform.io/)
 
@@ -386,7 +386,7 @@ To report a security vulnerability, please see [SECURITY.md](SECURITY.md).
 
 ## License
 
-This project is licensed under the GNU General Public License v3.0 -- see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 -- see the [LICENSE](LICENSE) file for details.
 
 [build-image]: https://github.com/Fractal-Cloud/terraform-provider-fractalcloud/actions/workflows/pr.yml/badge.svg
 [build-url]: https://github.com/Fractal-Cloud/terraform-provider-fractalcloud/actions/workflows/pr.yml
