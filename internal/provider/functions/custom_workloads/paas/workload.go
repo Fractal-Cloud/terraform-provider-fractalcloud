@@ -27,7 +27,7 @@ func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRe
 	resp.Definition = function.Definition{
 		Summary: "Creates a PaaS Workload blueprint component",
 		Description: "Builds a PaaS Workload component with the correct type and parameters for use in a fractal's components list. " +
-			"Platform and subnet are component object references with type validation. " +
+			"Subnet is a component object reference with type validation. " +
 			"Use links to define runtime relationships to other components, and security_groups for SG membership.",
 		Parameters: []function.Parameter{
 			function.ObjectParameter{
@@ -43,7 +43,6 @@ func (f *WorkloadFunction) Definition(_ context.Context, _ function.DefinitionRe
 					"cpu":             types.StringType,
 					"memory":          types.StringType,
 					"desired_count":   types.Int64Type,
-					"platform":        components.ComponentObjectType,
 					"subnet":          components.ComponentObjectType,
 					"links": types.ListType{
 						ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes},
@@ -66,7 +65,6 @@ type workloadConfig struct {
 	Cpu            types.String `tfsdk:"cpu"`
 	Memory         types.String `tfsdk:"memory"`
 	DesiredCount   types.Int64  `tfsdk:"desired_count"`
-	Platform       types.Object `tfsdk:"platform"`
 	Subnet         types.Object `tfsdk:"subnet"`
 	Links          types.List   `tfsdk:"links"`
 	SecurityGroups types.List   `tfsdk:"security_groups"`
@@ -101,15 +99,6 @@ func (f *WorkloadFunction) Run(ctx context.Context, req function.RunRequest, res
 	}
 
 	var deps []string
-
-	platformId, funcErr := components.ExtractDependency(config.Platform, "NetworkAndCompute.PaaS.ContainerPlatform")
-	if funcErr != nil {
-		resp.Error = function.ConcatFuncErrors(resp.Error, funcErr)
-		return
-	}
-	if platformId != "" {
-		deps = append(deps, platformId)
-	}
 
 	subnetId, funcErr := components.ExtractDependency(config.Subnet, "NetworkAndCompute.IaaS.Subnet")
 	if funcErr != nil {

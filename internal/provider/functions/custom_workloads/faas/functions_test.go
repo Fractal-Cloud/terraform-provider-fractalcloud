@@ -89,7 +89,6 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 		"memory_mb":       types.Int64Type,
 		"timeout_seconds": types.Int64Type,
 		"handler":         types.StringType,
-		"platform":        components.ComponentObjectType,
 		"subnet":          components.ComponentObjectType,
 		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
@@ -107,7 +106,6 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 		"memory_mb":       types.Int64Null(),
 		"timeout_seconds": types.Int64Null(),
 		"handler":         types.StringNull(),
-		"platform":        types.ObjectNull(components.ComponentAttrTypes),
 		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
 		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
@@ -135,7 +133,6 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 
 func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 	f := NewWorkloadFunction()
-	platform := buildTestComponent(t, "my-platform", "NetworkAndCompute.PaaS.ContainerPlatform")
 	subnet := buildTestComponent(t, "my-subnet", "NetworkAndCompute.IaaS.Subnet")
 	sg := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 	target := buildTestComponent(t, "workload-2", "CustomWorkloads.FaaS.Workload")
@@ -176,7 +173,6 @@ func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 		"memory_mb":       types.Int64Type,
 		"timeout_seconds": types.Int64Type,
 		"handler":         types.StringType,
-		"platform":        components.ComponentObjectType,
 		"subnet":          components.ComponentObjectType,
 		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
@@ -194,7 +190,6 @@ func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 		"memory_mb":       types.Int64Value(256),
 		"timeout_seconds": types.Int64Value(30),
 		"handler":         types.StringValue("index.handler"),
-		"platform":        platform,
 		"subnet":          subnet,
 		"links":           linkList,
 		"security_groups": sgList,
@@ -206,20 +201,17 @@ func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 	resp := runFunction(t, f, []attr.Value{configObj})
 	attrs := getResultAttrs(t, resp)
 
-	// Check dependencies include platform and subnet
+	// Check dependencies include subnet only
 	deps := attrs["dependencies_ids"].(types.List)
 	if deps.IsNull() {
 		t.Fatal("expected non-null dependencies")
 	}
 	depElems := deps.Elements()
-	if len(depElems) != 2 {
-		t.Fatalf("expected 2 dependencies, got %d", len(depElems))
+	if len(depElems) != 1 {
+		t.Fatalf("expected 1 dependency, got %d", len(depElems))
 	}
-	if depElems[0].(types.String).ValueString() != "my-platform" {
-		t.Errorf("expected first dependency %q, got %q", "my-platform", depElems[0].(types.String).ValueString())
-	}
-	if depElems[1].(types.String).ValueString() != "my-subnet" {
-		t.Errorf("expected second dependency %q, got %q", "my-subnet", depElems[1].(types.String).ValueString())
+	if depElems[0].(types.String).ValueString() != "my-subnet" {
+		t.Errorf("expected first dependency %q, got %q", "my-subnet", depElems[0].(types.String).ValueString())
 	}
 
 	// Check parameters
@@ -286,52 +278,3 @@ func TestWorkloadFunction_Run_WithDepsAndLinks(t *testing.T) {
 	}
 }
 
-func TestWorkloadFunction_Run_WrongPlatformType(t *testing.T) {
-	f := NewWorkloadFunction()
-	wrongPlatform := buildTestComponent(t, "subnet-1", "NetworkAndCompute.IaaS.Subnet")
-	configObj, diags := types.ObjectValue(map[string]attr.Type{
-		"id":              types.StringType,
-		"display_name":    types.StringType,
-		"description":     types.StringType,
-		"container_image": types.StringType,
-		"container_port":  types.Int64Type,
-		"container_name":  types.StringType,
-		"cpu":             types.StringType,
-		"memory":          types.StringType,
-		"desired_count":   types.Int64Type,
-		"runtime":         types.StringType,
-		"memory_mb":       types.Int64Type,
-		"timeout_seconds": types.Int64Type,
-		"handler":         types.StringType,
-		"platform":        components.ComponentObjectType,
-		"subnet":          components.ComponentObjectType,
-		"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
-		"security_groups": types.ListType{ElemType: components.ComponentObjectType},
-	}, map[string]attr.Value{
-		"id":              types.StringValue("workload-1"),
-		"display_name":    types.StringNull(),
-		"description":     types.StringNull(),
-		"container_image": types.StringNull(),
-		"container_port":  types.Int64Null(),
-		"container_name":  types.StringNull(),
-		"cpu":             types.StringNull(),
-		"memory":          types.StringNull(),
-		"desired_count":   types.Int64Null(),
-		"runtime":         types.StringNull(),
-		"memory_mb":       types.Int64Null(),
-		"timeout_seconds": types.Int64Null(),
-		"handler":         types.StringNull(),
-		"platform":        wrongPlatform,
-		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
-		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
-		"security_groups": types.ListNull(components.ComponentObjectType),
-	})
-	if diags.HasError() {
-		t.Fatalf("failed to build config: %s", diags.Errors())
-	}
-
-	resp := runFunction(t, f, []attr.Value{configObj})
-	if resp.Error == nil {
-		t.Fatal("expected error for wrong platform type, got nil")
-	}
-}

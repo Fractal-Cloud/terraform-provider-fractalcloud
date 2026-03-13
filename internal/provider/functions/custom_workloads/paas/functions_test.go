@@ -56,7 +56,6 @@ var workloadAttrTypes = map[string]attr.Type{
 	"cpu":             types.StringType,
 	"memory":          types.StringType,
 	"desired_count":   types.Int64Type,
-	"platform":        components.ComponentObjectType,
 	"subnet":          components.ComponentObjectType,
 	"links":           types.ListType{ElemType: types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}},
 	"security_groups": types.ListType{ElemType: components.ComponentObjectType},
@@ -97,7 +96,6 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 		"cpu":             types.StringNull(),
 		"memory":          types.StringNull(),
 		"desired_count":   types.Int64Null(),
-		"platform":        types.ObjectNull(components.ComponentAttrTypes),
 		"subnet":          types.ObjectNull(components.ComponentAttrTypes),
 		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
@@ -119,7 +117,6 @@ func TestWorkloadFunction_Run_Minimal(t *testing.T) {
 
 func TestWorkloadFunction_Run_WithDeps(t *testing.T) {
 	f := NewWorkloadFunction()
-	platform := buildTestComponent(t, "k8s-1", "NetworkAndCompute.PaaS.ContainerPlatform")
 	subnet := buildTestComponent(t, "subnet-1", "NetworkAndCompute.IaaS.Subnet")
 
 	configObj, diags := types.ObjectValue(workloadAttrTypes, map[string]attr.Value{
@@ -132,7 +129,6 @@ func TestWorkloadFunction_Run_WithDeps(t *testing.T) {
 		"cpu":             types.StringNull(),
 		"memory":          types.StringNull(),
 		"desired_count":   types.Int64Null(),
-		"platform":        platform,
 		"subnet":          subnet,
 		"links":           types.ListNull(types.ObjectType{AttrTypes: components.GenericLinkAttrTypes}),
 		"security_groups": types.ListNull(components.ComponentObjectType),
@@ -149,8 +145,8 @@ func TestWorkloadFunction_Run_WithDeps(t *testing.T) {
 		t.Fatal("expected non-null dependencies")
 	}
 	depElems := deps.Elements()
-	if len(depElems) != 2 {
-		t.Fatalf("expected 2 dependencies, got %d", len(depElems))
+	if len(depElems) != 1 {
+		t.Fatalf("expected 1 dependency, got %d", len(depElems))
 	}
 
 	params := attrs["parameters"].(types.Map)
@@ -162,7 +158,6 @@ func TestWorkloadFunction_Run_WithDeps(t *testing.T) {
 
 func TestWorkloadFunction_Run_AllParamsAndLinks(t *testing.T) {
 	f := NewWorkloadFunction()
-	platform := buildTestComponent(t, "k8s-1", "NetworkAndCompute.PaaS.ContainerPlatform")
 	subnet := buildTestComponent(t, "subnet-1", "NetworkAndCompute.IaaS.Subnet")
 	sg := buildTestComponent(t, "sg-1", "NetworkAndCompute.IaaS.SecurityGroup")
 	target := buildTestComponent(t, "workload-2", "CustomWorkloads.PaaS.Workload")
@@ -196,7 +191,6 @@ func TestWorkloadFunction_Run_AllParamsAndLinks(t *testing.T) {
 		"cpu":             types.StringValue("256"),
 		"memory":          types.StringValue("512"),
 		"desired_count":   types.Int64Value(3),
-		"platform":        platform,
 		"subnet":          subnet,
 		"links":           linkList,
 		"security_groups": sgList,

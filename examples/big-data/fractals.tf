@@ -17,7 +17,7 @@ locals {
     node_pools   = []
   })
 
-  data_producer = provider::fc::custom_workloads_paas_workload({
+  data_producer = provider::fc::custom_workloads_caas_workload({
     id              = "data-producer"
     display_name    = "Data Producer"
     description     = "Microservice that ingests external events and publishes them to the stream"
