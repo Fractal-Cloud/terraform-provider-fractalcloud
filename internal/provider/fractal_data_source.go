@@ -19,6 +19,27 @@ var (
 	_ datasource.DataSourceWithConfigure = &FractalsDataSource{}
 )
 
+// linkAttrTypes defines the attribute types for a component link object.
+var linkAttrTypes = map[string]attr.Type{
+	"component_id": basetypes.StringType{},
+	"settings":     basetypes.MapType{ElemType: basetypes.StringType{}},
+}
+
+// componentAttrTypes defines the attribute types for a component object.
+var componentAttrTypes = map[string]attr.Type{
+	"id":                  basetypes.StringType{},
+	"type":                basetypes.StringType{},
+	"display_name":        basetypes.StringType{},
+	"description":         basetypes.StringType{},
+	"version":             basetypes.StringType{},
+	"is_locked":           basetypes.BoolType{},
+	"recreate_on_failure": basetypes.BoolType{},
+	"parameters":          basetypes.MapType{ElemType: basetypes.StringType{}},
+	"dependencies_ids":    basetypes.ListType{ElemType: basetypes.StringType{}},
+	"links":               basetypes.ListType{ElemType: basetypes.ObjectType{AttrTypes: linkAttrTypes}},
+	"output_fields":       basetypes.ListType{ElemType: basetypes.StringType{}},
+}
+
 // NewFractalDataSource is a helper function to simplify the provider implementation.
 func NewFractalDataSource() datasource.DataSource {
 	return &FractalsDataSource{}
@@ -77,37 +98,8 @@ func (d *FractalsDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 				Computed: true,
 			},
 			"components": schema.ListAttribute{
-				Computed: true,
-				ElementType: basetypes.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"id":                  basetypes.StringType{},
-						"type":                basetypes.StringType{},
-						"display_name":        basetypes.StringType{},
-						"description":         basetypes.StringType{},
-						"version":             basetypes.StringType{},
-						"is_locked":           basetypes.BoolType{},
-						"recreate_on_failure": basetypes.BoolType{},
-						"parameters": basetypes.MapType{
-							ElemType: basetypes.StringType{},
-						},
-						"dependencies_ids": basetypes.ListType{
-							ElemType: basetypes.StringType{},
-						},
-						"links": basetypes.ListType{
-							ElemType: basetypes.ObjectType{
-								AttrTypes: map[string]attr.Type{
-									"component_id": basetypes.StringType{},
-									"settings": basetypes.MapType{
-										ElemType: basetypes.StringType{},
-									},
-								},
-							},
-						},
-						"output_fields": basetypes.ListType{
-							ElemType: basetypes.StringType{},
-						},
-					},
-				},
+				Computed:    true,
+				ElementType: basetypes.ObjectType{AttrTypes: componentAttrTypes},
 			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
@@ -203,17 +195,41 @@ func mapBlueprintToState(
 	model *BlueprintModel,
 	diags *Diagnostics,
 ) {
+	// Extract prior state component values so we can preserve fields the API doesn't round-trip.
+	priorVersions := make(map[string]types.String)
+	if !model.Components.IsNull() && !model.Components.IsUnknown() {
+		var priorComponents []ComponentModel
+		d := model.Components.ElementsAs(ctx, &priorComponents, false)
+		if !d.HasError() {
+			for _, pc := range priorComponents {
+				priorVersions[pc.Id.ValueString()] = pc.Version
+			}
+		}
+	}
+
 	components := make([]ComponentModel, len(blueprint.Components))
 	for i, component := range blueprint.Components {
-		parameters, d := types.MapValueFrom(ctx, types.StringType, component.Parameters)
+		params := component.Parameters
+		if params == nil {
+			params = map[string]string{}
+		}
+		parameters, d := types.MapValueFrom(ctx, types.StringType, params)
 		diags.Append(d...)
 
-		dependenciesIds, d := types.ListValueFrom(ctx, types.StringType, component.DependenciesIds)
+		depIds := component.DependenciesIds
+		if depIds == nil {
+			depIds = []string{}
+		}
+		dependenciesIds, d := types.ListValueFrom(ctx, types.StringType, depIds)
 		diags.Append(d...)
 
 		links := make([]LinkModel, len(component.Links))
 		for j, link := range component.Links {
-			settings, d := types.MapValueFrom(ctx, types.StringType, link.Settings)
+			linkSettings := link.Settings
+			if linkSettings == nil {
+				linkSettings = map[string]string{}
+			}
+			settings, d := types.MapValueFrom(ctx, types.StringType, linkSettings)
 			diags.Append(d...)
 
 			links[j] = LinkModel{
@@ -223,24 +239,31 @@ func mapBlueprintToState(
 		}
 
 		linksToMap, d := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"component_id": types.StringType,
-				"settings": types.MapType{
-					ElemType: basetypes.StringType{},
-				},
-			},
+			AttrTypes: linkAttrTypes,
 		}, links)
 		diags.Append(d...)
 
-		outputFields, d := types.ListValueFrom(ctx, types.StringType, component.OutputFields)
+		outFields := component.OutputFields
+		if outFields == nil {
+			outFields = []string{}
+		}
+		outputFields, d := types.ListValueFrom(ctx, types.StringType, outFields)
 		diags.Append(d...)
+
+		// The API doesn't return version — preserve from prior state if available.
+		version := stringPointerToTFValue(component.Version)
+		if version.ValueString() == "" {
+			if v, ok := priorVersions[component.Id]; ok && !v.IsNull() && !v.IsUnknown() {
+				version = v
+			}
+		}
 
 		components[i] = ComponentModel{
 			Id:                types.StringValue(component.Id),
 			Type:              types.StringValue(component.Type),
 			DisplayName:       stringPointerToTFValue(component.DisplayName),
 			Description:       stringPointerToTFValue(component.Description),
-			Version:           stringPointerToTFValue(component.Version),
+			Version:           version,
 			IsLocked:          boolPointerToTFValue(component.IsLocked),
 			RecreateOnFailure: boolPointerToTFValue(component.RecreateOnFailure),
 			Parameters:        parameters,
@@ -255,34 +278,7 @@ func mapBlueprintToState(
 	}
 
 	componentsToMap, d := types.ListValueFrom(ctx, types.ObjectType{
-		AttrTypes: map[string]attr.Type{
-			"id":                  basetypes.StringType{},
-			"type":                basetypes.StringType{},
-			"display_name":        basetypes.StringType{},
-			"description":         basetypes.StringType{},
-			"version":             basetypes.StringType{},
-			"is_locked":           basetypes.BoolType{},
-			"recreate_on_failure": basetypes.BoolType{},
-			"parameters": basetypes.MapType{
-				ElemType: basetypes.StringType{},
-			},
-			"dependencies_ids": basetypes.ListType{
-				ElemType: basetypes.StringType{},
-			},
-			"links": basetypes.ListType{
-				ElemType: basetypes.ObjectType{
-					AttrTypes: map[string]attr.Type{
-						"component_id": basetypes.StringType{},
-						"settings": basetypes.MapType{
-							ElemType: basetypes.StringType{},
-						},
-					},
-				},
-			},
-			"output_fields": basetypes.ListType{
-				ElemType: basetypes.StringType{},
-			},
-		},
+		AttrTypes: componentAttrTypes,
 	}, components)
 	diags.Append(d...)
 
