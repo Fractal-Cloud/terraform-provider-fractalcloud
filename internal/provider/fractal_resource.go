@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -95,29 +97,47 @@ func (r *FractalResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						},
 						"display_name": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
+							Default:  stringdefault.StaticString(""),
 						},
 						"description": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
+							Default:  stringdefault.StaticString(""),
 						},
 						"version": schema.StringAttribute{
 							Optional: true,
+							Computed: true,
+							Default:  stringdefault.StaticString(""),
 						},
 						"is_locked": schema.BoolAttribute{
 							Optional: true,
+							Computed: true,
+							Default:  booldefault.StaticBool(false),
 						},
 						"recreate_on_failure": schema.BoolAttribute{
 							Optional: true,
+							Computed: true,
+							Default:  booldefault.StaticBool(false),
 						},
 						"parameters": schema.MapAttribute{
 							Optional:    true,
+							Computed:    true,
 							ElementType: basetypes.StringType{},
+							Default:     mapdefault.StaticValue(types.MapValueMust(types.StringType, map[string]attr.Value{})),
 						},
 						"dependencies_ids": schema.ListAttribute{
 							Optional:    true,
+							Computed:    true,
 							ElementType: basetypes.StringType{},
+							Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 						},
 						"links": schema.ListNestedAttribute{
 							Optional: true,
+							Computed: true,
+							Default: listdefault.StaticValue(types.ListValueMust(types.ObjectType{
+								AttrTypes: linkAttrTypes,
+							}, []attr.Value{})),
 							NestedObject: schema.NestedAttributeObject{
 								Attributes: map[string]schema.Attribute{
 									"component_id": schema.StringAttribute{
@@ -131,8 +151,9 @@ func (r *FractalResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							},
 						},
 						"output_fields": schema.ListAttribute{
-							Optional:    true,
+							Computed:    true,
 							ElementType: basetypes.StringType{},
+							Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 						},
 					},
 				},

@@ -23,19 +23,19 @@ func stringValueOrNull(apiValue string, currentModelValue types.String) types.St
 }
 
 // stringPointerToTFValue converts a *string to a types.String.
-// Returns null if the pointer is nil.
+// Returns empty string if the pointer is nil, so Terraform never sees ""→null drift.
 func stringPointerToTFValue(v *string) types.String {
 	if v == nil {
-		return types.StringNull()
+		return types.StringValue("")
 	}
 	return types.StringValue(*v)
 }
 
 // boolPointerToTFValue converts a *bool to a types.Bool.
-// Returns null if the pointer is nil.
+// Returns false if the pointer is nil, so Terraform never sees false→null drift.
 func boolPointerToTFValue(v *bool) types.Bool {
 	if v == nil {
-		return types.BoolNull()
+		return types.BoolValue(false)
 	}
 	return types.BoolValue(*v)
 }

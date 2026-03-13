@@ -193,11 +193,15 @@ func mapAnyToMapStringJSON(logger *ClientLogger, in map[string]interface{}) map[
 	out := make(map[string]string, len(in))
 
 	for k, v := range in {
-		b, err := json.Marshal(v)
-		if err == nil {
-			out[k] = string(b)
-		} else if logger != nil && logger.Warning != nil {
-			logger.Warning(fmt.Sprintf("marshal key %q: %v", k, err))
+		if s, ok := v.(string); ok {
+			out[k] = s
+		} else {
+			b, err := json.Marshal(v)
+			if err == nil {
+				out[k] = string(b)
+			} else if logger != nil && logger.Warning != nil {
+				logger.Warning(fmt.Sprintf("marshal key %q: %v", k, err))
+			}
 		}
 	}
 
